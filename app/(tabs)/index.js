@@ -1,4 +1,6 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
+import { db } from '../../firebase/firebaseConfig';
+import { collection, getDocs } from 'firebase/firestore';
 import {
   View,
   Text,
@@ -8,34 +10,147 @@ import {
   Image,
   TouchableOpacity,
 } from 'react-native';
-
+import styles from '../../styles/HomeStyles';
 export default function Home() {
+  const [hotels, setHotels] = useState([]);
+  const [categories, setCategories] = useState([]);
+  const [selectedCategory, setSelectedCategory] = useState("All");
+  const [searchText, setSearchText] = useState("");
+  const [selectedLocation, setSelectedLocation] = useState("All");
+  const [showLocations, setShowLocations] = useState(false);
+
+  useEffect(() => {
+    fetchHotels();
+    fetchCategories();
+  }, []);
+
+  const fetchHotels = async () => {
+    const snapshot = await getDocs(collection(db, "hotels"));
+    const data = snapshot.docs.map(doc => ({
+      id: doc.id,
+      ...doc.data()
+    }));
+    setHotels(data);
+  };
+
+  const fetchCategories = async () => {
+    const snapshot = await getDocs(collection(db, "categories"));
+    const data = snapshot.docs.map(doc => doc.data().name);
+    setCategories(data);
+  };
+
+  // ✅ NORMALIZE FUNCTION (KEY FIX)
+  const normalize = (text) =>
+    text?.toLowerCase().replace(/\s/g, '');
+
+  // ✅ CLEAN LOCATIONS (NO HARD CODE)
+  const locations = [
+    "All",
+    ...new Set(
+      hotels
+        .map(item => item.location?.trim())
+        .filter(Boolean)
+    )
+  ];
+
+  // ✅ FILTER LOGIC (FIXED)
+  const filteredHotels =
+    hotels
+      .filter(item =>
+        selectedLocation === "All"
+          ? true
+          : normalize(item.location) === normalize(selectedLocation)
+      )
+      .filter(item =>
+        selectedCategory === "All"
+          ? true
+          : item.category === selectedCategory
+      )
+      .filter(item =>
+        item.name?.toLowerCase().includes(searchText.toLowerCase())
+      );
+
   return (
     <ScrollView style={styles.container} showsVerticalScrollIndicator={false}>
 
       {/* HEADER */}
-      <View style={styles.header}>
-        <View>
-          <Text style={styles.hello}>Hello</Text>
-          <Text style={styles.name}>Arcadia</Text>
-        </View>
+<View style={styles.header}>
 
-        <View style={styles.headerIcons}>
-          <View style={styles.iconBox} />
-          <View style={styles.iconBox} />
-        </View>
-      </View>
+  {/* LEFT: USER INFO */}
+  <View style={styles.leftHeader}>
+    <Image
+      source={{ uri: 'https://i.pravatar.cc/100' }} // dummy profile
+      style={styles.profilePic}
+    />
+    <View>
+      <Text style={styles.hello}>Hello</Text>
+      <Text style={styles.name}>Arcadia</Text>
+    </View>
+  </View>
 
-      {/* SEARCH */}
+  {/* MIDDLE: APP NAME */}
+  <View style={styles.centerHeader}>
+    <Text style={styles.appName}>HotelBookings</Text>
+  </View>
+
+  {/* RIGHT: ICONS */}
+  <View style={styles.rightHeader}>
+
+    {/* Notification */}
+    <TouchableOpacity style={styles.iconCircle}>
+      <Text style={styles.iconText}>🔔</Text>
+    </TouchableOpacity>
+
+    {/* Menu (3 dots) */}
+    <TouchableOpacity style={styles.iconCircle}>
+      <Text style={styles.iconText}>⋮</Text>
+    </TouchableOpacity>
+
+  </View>
+
+</View>
+
+      {/* SEARCH + LOCATION */}
       <View style={styles.searchRow}>
-        <View style={styles.locationBox}>
-          <Text>📍 BALI, IDN</Text>
-        </View>
 
+        {/* SEARCH */}
         <TextInput
-          placeholder="Search..."
+          placeholder="Search by name..."
+          placeholderTextColor="#888"
+          value={searchText}
+          onChangeText={setSearchText}
           style={styles.search}
         />
+
+        {/* LOCATION DROPDOWN */}
+        <View style={{ position: 'relative' }}>
+          <TouchableOpacity
+            style={styles.locationBoxRight}
+            onPress={() => setShowLocations(!showLocations)}
+          >
+            <Text style={{ fontSize: 12 }}>
+              📍 {selectedLocation} ⌄
+            </Text>
+          </TouchableOpacity>
+
+          {showLocations && (
+            <View style={styles.dropdownRight}>
+              {locations.map((loc, index) => (
+                <Text
+                  key={index}
+                  onPress={() => {
+                    setSelectedLocation(loc);
+                    setShowLocations(false);
+                  }}
+                  style={styles.dropdownItem}
+                >
+                  {loc}
+                </Text>
+              ))}
+            </View>
+          )}
+        </View>
+
       </View>
 
       {/* POPULAR */}
@@ -44,15 +159,36 @@ export default function Home() {
         <Text style={styles.seeAll}>See All</Text>
       </View>
 
-      <View style={styles.card}>
-        <Image
-    source={{ uri: "https://images.unsplash.com/photo-1566073771259-6a8506099945" }}
-    style={styles.cardImage}
-  />
-        <Text style={styles.cardTitle}>Oce Hotel</Text>
-        <Text style={styles.cardLocation}>Bandung, Indonesia</Text>
-        <Text style={styles.price}>$400,000/Night</Text>
-      </View>
+      <ScrollView horizontal showsHorizontalScrollIndicator={false}>
+        {hotels
+          .filter(item =>
+            selectedLocation === "All"
+              ? true
+              : normalize(item.location) === normalize(selectedLocation)
+          )
+          .map(item => (
+            <View key={item.id} style={styles.popularCard}>
+              <Image source={{ uri: item.image }} style={styles.popularImage} />
+
+              <View style={styles.overlay} />
+
+              <View style={styles.popularContent}>
+                <Text style={styles.hotelName}>{item.name}</Text>
+                <Text style={styles.hotelLocation}>📍 {item.location}</Text>
+
+                <View style={styles.rowBetween}>
+                  <Text style={styles.price}>${item.price}/Night</Text>
+
+                  <View style={styles.ratingBox}>
+                    <Text style={{ fontSize: 10 }}>
+                      ⭐ {item.rating || 4.5}
+                    </Text>
+                  </View>
+                </View>
+              </View>
+            </View>
+          ))}
+      </ScrollView>
 
       {/* CATEGORIES */}
       <View style={styles.sectionHeader}>
@@ -61,9 +197,31 @@ export default function Home() {
       </View>
 
       <ScrollView horizontal showsHorizontalScrollIndicator={false}>
-        {['City', 'Beach', 'Mountain', 'Village'].map((item, index) => (
-          <View key={index} style={styles.chip}>
-            <Text>{item}</Text>
+        <View
+          style={[
+            styles.chip,
+            selectedCategory === "All" && styles.activeChip
+          ]}
+        >
+          <Text onPress={() => setSelectedCategory("All")}>All</Text>
+        </View>
+
+        {categories.map((item, index) => (
+          <View
+            key={index}
+            style={[
+              styles.chip,
+              selectedCategory === item && styles.activeChip
+            ]}
+          >
+            <Text
+              onPress={() => setSelectedCategory(item)}
+              style={[
+                selectedCategory === item && { color: '#fff' }
+              ]}
+            >
+              {item}
+            </Text>
           </View>
         ))}
       </ScrollView>
@@ -75,131 +233,15 @@ export default function Home() {
       </View>
 
       <ScrollView horizontal showsHorizontalScrollIndicator={false}>
-        <View style={styles.smallCard}>
-          <Text>Palace Hotel</Text>
-        </View>
-
-        <View style={styles.smallCard}>
-          <Text>Tower Hotel</Text>
-        </View>
+        {filteredHotels.map(item => (
+          <View key={item.id} style={styles.recommendCard}>
+            <Image source={{ uri: item.image }} style={styles.recommendImage} />
+            <Text style={styles.recommendName}>{item.name}</Text>
+            <Text style={styles.recommendPrice}>${item.price}</Text>
+          </View>
+        ))}
       </ScrollView>
 
     </ScrollView>
   );
 }
-
-/* STYLES */
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: '#fff',
-    padding: 20,
-  },
-
-  header: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    marginTop: 40,
-    alignItems: 'center',
-  },
-
-  hello: {
-    fontSize: 14,
-    color: '#777',
-  },
-
-  name: {
-    fontSize: 20,
-    fontWeight: 'bold',
-  },
-
-  headerIcons: {
-    flexDirection: 'row',
-    gap: 10,
-  },
-
-  iconBox: {
-    width: 35,
-    height: 35,
-    borderRadius: 20,
-    backgroundColor: '#ddd',
-  },
-
-  searchRow: {
-    marginTop: 20,
-  },
-
-  locationBox: {
-    backgroundColor: '#e6f7ff',
-    padding: 10,
-    borderRadius: 20,
-    marginBottom: 10,
-    width: 120,
-  },
-
-  search: {
-    backgroundColor: '#f2f2f2',
-    padding: 12,
-    borderRadius: 10,
-  },
-
-  sectionHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    marginTop: 20,
-  },
-
-  sectionTitle: {
-    fontSize: 18,
-    fontWeight: 'bold',
-  },
-
-  seeAll: {
-    color: 'gray',
-  },
-
-  card: {
-    backgroundColor: '#ddd',
-    padding: 20,
-    borderRadius: 15,
-    marginTop: 10,
-  },
-
-  cardTitle: {
-    fontSize: 18,
-    fontWeight: 'bold',
-  },
-
-  cardLocation: {
-    color: '#555',
-  },
-
-  price: {
-    marginTop: 10,
-    fontWeight: 'bold',
-  },
-
-  chip: {
-    backgroundColor: '#e6f7ff',
-    padding: 10,
-    borderRadius: 20,
-    marginRight: 10,
-    marginTop: 10,
-  },
-
-  smallCard: {
-    width: 140,
-    height: 100,
-    backgroundColor: '#eee',
-    borderRadius: 15,
-    marginRight: 10,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  cardImage: {
-  width: '100%',
-  height: 150,
-  borderRadius: 10,
-  marginBottom: 10,
-},
-});
