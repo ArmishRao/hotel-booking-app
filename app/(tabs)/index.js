@@ -11,7 +11,10 @@ import {
   TouchableOpacity,
 } from 'react-native';
 import styles from '../../styles/HomeStyles';
+import { useContext } from 'react';
+import { AuthContext } from '../../context/AuthContext';
 export default function Home() {
+  const { userData } = useContext(AuthContext);
   const [hotels, setHotels] = useState([]);
   const [categories, setCategories] = useState([]);
   const [selectedCategory, setSelectedCategory] = useState("All");
@@ -79,12 +82,16 @@ export default function Home() {
   {/* LEFT: USER INFO */}
   <View style={styles.leftHeader}>
     <Image
-      source={{ uri: 'https://i.pravatar.cc/100' }} // dummy profile
-      style={styles.profilePic}
-    />
+  source={{
+    uri: userData?.image || 'https://via.placeholder.com/100'
+  }}
+  style={styles.profilePic}
+/>
     <View>
       <Text style={styles.hello}>Hello</Text>
-      <Text style={styles.name}>Arcadia</Text>
+      <Text style={styles.name}>
+          {userData?.name || "User"}
+            </Text>
     </View>
   </View>
 
