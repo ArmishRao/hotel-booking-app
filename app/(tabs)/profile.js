@@ -1,4 +1,6 @@
 import React, { useEffect, useState } from 'react';
+import { useRouter } from "expo-router";
+
 import {
   View,
   Text,
@@ -44,11 +46,15 @@ export default function ProfileScreen({ navigation }) {
     return unsub;
   }, []);
 
-  const handleLogout = async () => {
+
+// inside the component:
+    const router = useRouter();
+
+    const handleLogout = async () => {
     await signOut(auth);
     setLogoutModal(false);
-    navigation.replace("auth/login");
-  };
+    router.replace("/auth/login");  // ← fixed
+    };
 
   if (loading) {
     return (

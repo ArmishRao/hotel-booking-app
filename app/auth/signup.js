@@ -1,14 +1,16 @@
 import React, { useState } from "react";
+import { doc, setDoc } from "firebase/firestore";
 import {
   View,
   Text,
   TextInput,
   TouchableOpacity,
   StyleSheet,
-  SafeAreaView
+  SafeAreaView,
+  ActivityIndicator,
 } from "react-native";
 import { createUserWithEmailAndPassword } from "firebase/auth";
-import { auth } from "../../firebase/firebaseConfig";
+import { auth, db } from "../../firebase/firebaseConfig";
 import { useRouter } from "expo-router";
 
 export default function Signup() {
@@ -18,18 +20,37 @@ export default function Signup() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
+  const [loading, setLoading] = useState(false);
 
   const handleSignup = async () => {
     if (password !== confirmPassword) {
       alert("Passwords do not match");
       return;
     }
+    if (!name || !email || !password) {
+      alert("Please fill all fields");
+      return;
+    }
 
+    setLoading(true);
     try {
-      await createUserWithEmailAndPassword(auth, email, password);
+      // 1. Create auth user
+      const userCredential = await createUserWithEmailAndPassword(auth, email, password);
+      const user = userCredential.user;
+
+// inside handleSignup after createUserWithEmailAndPassword:
+await setDoc(doc(db, "users", user.uid), {
+  name: name,
+  email: email,
+  image: "https://i.pravatar.cc/150",
+  role: "user",
+  createdAt: new Date().toISOString(),
+});
       router.replace("/(tabs)");
     } catch (error) {
       alert(error.message);
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -38,7 +59,9 @@ export default function Signup() {
 
       {/* Header */}
       <View style={styles.header}>
-        <Text style={styles.back}>←</Text>
+        <TouchableOpacity onPress={() => router.back()}>
+          <Text style={styles.back}>←</Text>
+        </TouchableOpacity>
         <Text style={styles.menu}>⋮</Text>
       </View>
 
@@ -68,6 +91,8 @@ export default function Signup() {
           style={styles.input}
           value={email}
           onChangeText={setEmail}
+          keyboardType="email-address"
+          autoCapitalize="none"
         />
 
         <TextInput
@@ -88,18 +113,22 @@ export default function Signup() {
           onChangeText={setConfirmPassword}
         />
 
-        {/* Button */}
-        <TouchableOpacity style={styles.button} onPress={handleSignup}>
-          <Text style={styles.buttonText}>Continue Sign Up</Text>
+        <TouchableOpacity
+          style={[styles.button, loading && { opacity: 0.7 }]}
+          onPress={handleSignup}
+          disabled={loading}
+        >
+          {loading
+            ? <ActivityIndicator color="#fff" />
+            : <Text style={styles.buttonText}>Continue Sign Up</Text>
+          }
         </TouchableOpacity>
 
       </View>
 
       {/* Login Link */}
       <View style={styles.footer}>
-        <Text style={styles.footerText}>
-          Already have account?
-        </Text>
+        <Text style={styles.footerText}>Already have account?</Text>
         <TouchableOpacity onPress={() => router.push("/auth/login")}>
           <Text style={styles.loginText}> Log in</Text>
         </TouchableOpacity>
@@ -115,38 +144,25 @@ const styles = StyleSheet.create({
     backgroundColor: "#dcdcdc",
     paddingHorizontal: 20,
   },
-
   header: {
     flexDirection: "row",
     justifyContent: "space-between",
     marginTop: 10,
   },
-
-  back: {
-    fontSize: 22,
-  },
-
-  menu: {
-    fontSize: 22,
-  },
-
+  back: { fontSize: 22 },
+  menu: { fontSize: 22 },
   title: {
     fontSize: 26,
     fontWeight: "600",
     marginTop: 20,
-    color: "#3aa0b8"
+    color: "#3aa0b8",
   },
-
   subtitle: {
     color: "#527181",
     marginTop: 10,
     marginBottom: 20,
   },
-
-  form: {
-    marginTop: 10,
-  },
-
+  form: { marginTop: 10 },
   input: {
     backgroundColor: "#e5e5e5",
     padding: 14,
@@ -154,7 +170,6 @@ const styles = StyleSheet.create({
     marginBottom: 12,
     color: "#000",
   },
-
   button: {
     backgroundColor: "#3aa0b8",
     padding: 16,
@@ -162,22 +177,16 @@ const styles = StyleSheet.create({
     marginTop: 10,
     alignItems: "center",
   },
-
   buttonText: {
     color: "#fff",
     fontWeight: "600",
   },
-
   footer: {
     flexDirection: "row",
     justifyContent: "center",
     marginTop: 30,
   },
-
-  footerText: {
-    color: "#888",
-  },
-
+  footerText: { color: "#888" },
   loginText: {
     color: "#3aa0b8",
     fontWeight: "bold",
