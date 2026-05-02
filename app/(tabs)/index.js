@@ -4,17 +4,16 @@ import { collection, getDocs } from 'firebase/firestore';
 import {
   View,
   Text,
-  StyleSheet,
   TextInput,
   ScrollView,
   Image,
   TouchableOpacity,
 } from 'react-native';
+import { useRouter } from 'expo-router';
 import styles from '../../styles/HomeStyles';
-import { useContext } from 'react';
-import { AuthContext } from '../../context/AuthContext';
 export default function Home() {
-  const { userData } = useContext(AuthContext);
+    const router = useRouter(); 
+
   const [hotels, setHotels] = useState([]);
   const [categories, setCategories] = useState([]);
   const [selectedCategory, setSelectedCategory] = useState("All");
@@ -42,11 +41,9 @@ export default function Home() {
     setCategories(data);
   };
 
-  // ✅ NORMALIZE FUNCTION (KEY FIX)
   const normalize = (text) =>
     text?.toLowerCase().replace(/\s/g, '');
 
-  // ✅ CLEAN LOCATIONS (NO HARD CODE)
   const locations = [
     "All",
     ...new Set(
@@ -56,7 +53,6 @@ export default function Home() {
     )
   ];
 
-  // ✅ FILTER LOGIC (FIXED)
   const filteredHotels =
     hotels
       .filter(item =>
@@ -73,54 +69,48 @@ export default function Home() {
         item.name?.toLowerCase().includes(searchText.toLowerCase())
       );
 
+  const goToDetail = (id) => {
+    router.push({ pathname: '/hotel-detail', params: { id } });
+  };
+
   return (
     <ScrollView style={styles.container} showsVerticalScrollIndicator={false}>
 
       {/* HEADER */}
-<View style={styles.header}>
+      <View style={styles.header}>
 
   {/* LEFT: USER INFO */}
   <View style={styles.leftHeader}>
     <Image
-  source={{
-    uri: userData?.image || 'https://via.placeholder.com/100'
-  }}
-  style={styles.profilePic}
-/>
+      source={{ uri: 'https://i.pravatar.cc/100' }} // dummy profile
+      style={styles.profilePic}
+    />
     <View>
       <Text style={styles.hello}>Hello</Text>
-      <Text style={styles.name}>
-          {userData?.name || "User"}
-            </Text>
+      <Text style={styles.name}>Arcadia</Text>
     </View>
   </View>
 
-  {/* MIDDLE: APP NAME */}
-  <View style={styles.centerHeader}>
-    <Text style={styles.appName}>HotelBookings</Text>
-  </View>
+        {/* MIDDLE: APP NAME */}
+        <View style={styles.centerHeader}>
+          <Text style={styles.appName}>HotelBookings</Text>
+        </View>
 
-  {/* RIGHT: ICONS */}
-  <View style={styles.rightHeader}>
+        {/* RIGHT: ICONS */}
+        <View style={styles.rightHeader}>
+          <TouchableOpacity style={styles.iconCircle}>
+            <Text style={styles.iconText}>🔔</Text>
+          </TouchableOpacity>
+          <TouchableOpacity style={styles.iconCircle}>
+            <Text style={styles.iconText}>⋮</Text>
+          </TouchableOpacity>
+        </View>
 
-    {/* Notification */}
-    <TouchableOpacity style={styles.iconCircle}>
-      <Text style={styles.iconText}>🔔</Text>
-    </TouchableOpacity>
-
-    {/* Menu (3 dots) */}
-    <TouchableOpacity style={styles.iconCircle}>
-      <Text style={styles.iconText}>⋮</Text>
-    </TouchableOpacity>
-
-  </View>
-
-</View>
+      </View>
 
       {/* SEARCH + LOCATION */}
       <View style={styles.searchRow}>
 
-        {/* SEARCH */}
         <TextInput
           placeholder="Search by name..."
           placeholderTextColor="#888"
@@ -129,7 +119,6 @@ export default function Home() {
           style={styles.search}
         />
 
-        {/* LOCATION DROPDOWN */}
         <View style={{ position: 'relative' }}>
           <TouchableOpacity
             style={styles.locationBoxRight}
@@ -174,26 +163,27 @@ export default function Home() {
               : normalize(item.location) === normalize(selectedLocation)
           )
           .map(item => (
-            <View key={item.id} style={styles.popularCard}>
-              <Image source={{ uri: item.image }} style={styles.popularImage} />
-
-              <View style={styles.overlay} />
-
-              <View style={styles.popularContent}>
-                <Text style={styles.hotelName}>{item.name}</Text>
-                <Text style={styles.hotelLocation}>📍 {item.location}</Text>
-
-                <View style={styles.rowBetween}>
-                  <Text style={styles.price}>${item.price}/Night</Text>
-
-                  <View style={styles.ratingBox}>
-                    <Text style={{ fontSize: 10 }}>
-                      ⭐ {item.rating || 4.5}
-                    </Text>
+            // ✅ NOW CLICKABLE
+            <TouchableOpacity
+              key={item.id}
+              onPress={() => goToDetail(item.id)}
+              activeOpacity={0.85}
+            >
+              <View style={styles.popularCard}>
+                <Image source={{ uri: item.image }} style={styles.popularImage} />
+                <View style={styles.overlay} />
+                <View style={styles.popularContent}>
+                  <Text style={styles.hotelName}>{item.name}</Text>
+                  <Text style={styles.hotelLocation}>📍 {item.location}</Text>
+                  <View style={styles.rowBetween}>
+                    <Text style={styles.price}>${item.price}/Night</Text>
+                    <View style={styles.ratingBox}>
+                      <Text style={{ fontSize: 10 }}>⭐ {item.rating || 4.5}</Text>
+                    </View>
                   </View>
                 </View>
               </View>
-            </View>
+            </TouchableOpacity>
           ))}
       </ScrollView>
 
@@ -204,28 +194,18 @@ export default function Home() {
       </View>
 
       <ScrollView horizontal showsHorizontalScrollIndicator={false}>
-        <View
-          style={[
-            styles.chip,
-            selectedCategory === "All" && styles.activeChip
-          ]}
-        >
+        <View style={[styles.chip, selectedCategory === "All" && styles.activeChip]}>
           <Text onPress={() => setSelectedCategory("All")}>All</Text>
         </View>
 
         {categories.map((item, index) => (
           <View
             key={index}
-            style={[
-              styles.chip,
-              selectedCategory === item && styles.activeChip
-            ]}
+            style={[styles.chip, selectedCategory === item && styles.activeChip]}
           >
             <Text
               onPress={() => setSelectedCategory(item)}
-              style={[
-                selectedCategory === item && { color: '#fff' }
-              ]}
+              style={[selectedCategory === item && { color: '#fff' }]}
             >
               {item}
             </Text>
@@ -241,11 +221,18 @@ export default function Home() {
 
       <ScrollView horizontal showsHorizontalScrollIndicator={false}>
         {filteredHotels.map(item => (
-          <View key={item.id} style={styles.recommendCard}>
-            <Image source={{ uri: item.image }} style={styles.recommendImage} />
-            <Text style={styles.recommendName}>{item.name}</Text>
-            <Text style={styles.recommendPrice}>${item.price}</Text>
-          </View>
+          // ✅ NOW CLICKABLE
+          <TouchableOpacity
+            key={item.id}
+            onPress={() => goToDetail(item.id)}
+            activeOpacity={0.85}
+          >
+            <View style={styles.recommendCard}>
+              <Image source={{ uri: item.image }} style={styles.recommendImage} />
+              <Text style={styles.recommendName}>{item.name}</Text>
+              <Text style={styles.recommendPrice}>${item.price}</Text>
+            </View>
+          </TouchableOpacity>
         ))}
       </ScrollView>
 
