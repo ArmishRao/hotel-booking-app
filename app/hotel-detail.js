@@ -1,5 +1,6 @@
 
 import React, { useEffect, useState } from 'react';
+import { Linking } from 'react-native';
 import {
   View,
   Text,
@@ -40,7 +41,19 @@ export default function HotelDetail() {
       setLoading(false);
     }
   };
+  const handleCall = () => {
+  const phone = hotel.contact; // stored as e.g. "+923001234567"
+  if (phone) {
+    Linking.openURL(`tel:${phone}`);
+  }
+};
 
+const handleWhatsApp = () => {
+  const phone = hotel.contact?.replace(/\D/g, ''); // strip non-digits
+  if (phone) {
+    Linking.openURL(`https://wa.me/${phone}`);
+  }
+};
   if (loading) {
     return (
       <View style={styles.centered}>
@@ -142,13 +155,13 @@ export default function HotelDetail() {
               </View>
             </View>
             <View style={styles.ownerActions}>
-              <TouchableOpacity style={styles.ownerBtn}>
-                <Text style={styles.ownerBtnIcon}>📞</Text>
-              </TouchableOpacity>
-              <TouchableOpacity style={[styles.ownerBtn, { marginLeft: 10 }]}>
-                <Text style={styles.ownerBtnIcon}>💬</Text>
-              </TouchableOpacity>
-            </View>
+  <TouchableOpacity style={styles.ownerBtn} onPress={handleCall}>
+    <Text style={styles.ownerBtnIcon}>📞</Text>
+  </TouchableOpacity>
+  <TouchableOpacity style={[styles.ownerBtn, { marginLeft: 10 }]} onPress={handleWhatsApp}>
+    <Text style={styles.ownerBtnIcon}>💬</Text>
+  </TouchableOpacity>
+</View>
           </View>
 
           {/* DESCRIPTION */}
@@ -161,12 +174,15 @@ export default function HotelDetail() {
         </View>
       </ScrollView>
 
-      {/* BOOKING BUTTON */}
-      <View style={styles.footer}>
-        <TouchableOpacity style={styles.bookingBtn}>
-          <Text style={styles.bookingText}>Booking</Text>
-        </TouchableOpacity>
-      </View>
+      <TouchableOpacity
+  style={styles.bookingBtn}
+  onPress={() => router.push({
+    pathname: '/booking',
+    params: { id: hotel.id }
+  })}
+>
+  <Text style={styles.bookingText}>Booking</Text>
+</TouchableOpacity>
 
     </View>
   );

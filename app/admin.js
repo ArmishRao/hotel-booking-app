@@ -118,27 +118,17 @@ export default function AdminDashboard() {
   };
 
   // ─── DELETE ───────────────────────────────────────────────
-  const handleDelete = (hotel) => {
-    Alert.alert(
-      "Delete Hotel",
-      `Are you sure you want to delete "${hotel.name}"?`,
-      [
-        { text: "Cancel", style: "cancel" },
-        {
-          text: "Delete",
-          style: "destructive",
-          onPress: async () => {
-            try {
-              await deleteDoc(doc(db, "hotels", hotel.id));
-              fetchHotels();
-            } catch (e) {
-              Alert.alert("Error", "Could not delete hotel.");
-            }
-          },
-        },
-      ]
-    );
-  };
+const handleDelete = async (hotel) => {
+  const confirmed = window.confirm(`Are you sure you want to delete "${hotel.name}"?`);
+  if (!confirmed) return;
+
+  try {
+    await deleteDoc(doc(db, "hotels", hotel.id));
+    setHotels((prev) => prev.filter((h) => h.id !== hotel.id));
+  } catch (e) {
+    window.alert("Could not delete: " + e.message);
+  }
+};
 
   // ─── LOGOUT ──────────────────────────────────────────────
   const handleLogout = async () => {
