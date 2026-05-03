@@ -13,9 +13,15 @@ import { db } from '../../firebase/firebaseConfig';
 import { collection, getDocs } from 'firebase/firestore';
 import { useContext } from 'react';
 import { AuthContext } from '../../context/AuthContext';
+import { useTheme } from '../../context/ThemeContext'; // ← ADD
 
 export default function SearchScreen() {
   const { userData } = useContext(AuthContext);
+
+  // ── DARK MODE ──
+  const { theme } = useTheme();
+  const { colors, darkMode } = theme;
+
   const [hotels, setHotels] = useState([]);
   const [searchText, setSearchText] = useState("");
   const [selectedCategory, setSelectedCategory] = useState("All");
@@ -35,7 +41,6 @@ export default function SearchScreen() {
     setHotels(data);
   };
 
-  // ✅ Extract locations dynamically
   const locations = [
     "All",
     ...new Set(
@@ -45,11 +50,9 @@ export default function SearchScreen() {
     )
   ];
 
-  // ✅ Normalize helper
   const normalize = (text) =>
     text?.toLowerCase().replace(/\s/g, '');
 
-  // ✅ FILTER LOGIC (COMBINED)
   const filteredHotels = hotels
     .filter(item =>
       selectedLocation === "All"
@@ -68,7 +71,11 @@ export default function SearchScreen() {
   const categories = ["All", "City", "Beach", "Mountain", "Village"];
 
   return (
-    <ScrollView style={styles.container} showsVerticalScrollIndicator={false}>
+    // ── DARK MODE: main bg ──
+    <ScrollView
+      style={[styles.container, { backgroundColor: colors.background }]}
+      showsVerticalScrollIndicator={false}
+    >
 
       {/* HEADER */}
       <View style={styles.header}>
@@ -78,18 +85,26 @@ export default function SearchScreen() {
             style={styles.profilePic}
           />
           <View>
-            <Text style={styles.hello}>Hello</Text>
-            <Text style={styles.name}>{userData?.name || userData?.username || 'User'}</Text>
-            
-            
+            {/* ── DARK MODE: hello + name ── */}
+            <Text style={[styles.hello, { color: darkMode ? '#5a8a95' : '#777' }]}>
+              Hello
+            </Text>
+            <Text style={[styles.name, { color: colors.text }]}>
+              {userData?.name || userData?.username || 'User'}
+            </Text>
           </View>
         </View>
 
         <View style={styles.rightHeader}>
-          <TouchableOpacity style={styles.iconCircle}>
+          {/* ── DARK MODE: icon circles ── */}
+          <TouchableOpacity
+            style={[styles.iconCircle, { backgroundColor: colors.card }]}
+          >
             <Text>🔔</Text>
           </TouchableOpacity>
-          <TouchableOpacity style={styles.iconCircle}>
+          <TouchableOpacity
+            style={[styles.iconCircle, { backgroundColor: colors.card }]}
+          >
             <Text>⋮</Text>
           </TouchableOpacity>
         </View>
@@ -98,35 +113,39 @@ export default function SearchScreen() {
       {/* SEARCH + LOCATION */}
       <View style={styles.searchContainer}>
 
-        {/* SEARCH LEFT */}
-        <View style={styles.searchBar}>
+        {/* ── DARK MODE: search bar ── */}
+        <View style={[styles.searchBar, { backgroundColor: colors.card }]}>
           <TextInput
             placeholder="Search..."
-            placeholderTextColor="#888"
+            placeholderTextColor={darkMode ? '#5a7a82' : '#888'}
             value={searchText}
             onChangeText={setSearchText}
-            style={{ flex: 1 }}
+            style={[{ flex: 1 }, { color: colors.text }]}
           />
           <Text>🔍</Text>
         </View>
 
-        {/* LOCATION RIGHT */}
         <View style={{ position: 'relative' }}>
+          {/* ── DARK MODE: location pill ── */}
           <TouchableOpacity
-            style={styles.locationPill}
+            style={[
+              styles.locationPill,
+              { backgroundColor: darkMode ? '#1a3a4a' : '#DFF3F0' }
+            ]}
             onPress={() => setShowLocations(!showLocations)}
           >
-            <Text style={styles.locationText}>
+            <Text style={[styles.locationText, { color: colors.text }]}>
               📍 {selectedLocation} ⌄
             </Text>
           </TouchableOpacity>
 
+          {/* ── DARK MODE: dropdown ── */}
           {showLocations && (
-            <View style={styles.dropdown}>
+            <View style={[styles.dropdown, { backgroundColor: colors.card }]}>
               {locations.map((loc, index) => (
                 <Text
                   key={index}
-                  style={styles.dropdownItem}
+                  style={[styles.dropdownItem, { color: colors.text }]}
                   onPress={() => {
                     setSelectedLocation(loc);
                     setShowLocations(false);
@@ -142,13 +161,14 @@ export default function SearchScreen() {
       </View>
 
       {/* CATEGORIES */}
+      {/* ── DARK MODE: section titles ── */}
       <View style={styles.sectionHeader}>
-        <Text style={styles.sectionTitle}>Categories</Text>
+        <Text style={[styles.sectionTitle, { color: colors.text }]}>Categories</Text>
         <Text style={styles.seeAll}>See All</Text>
       </View>
 
-      {/* Selected Location Text */}
-      <Text style={styles.selectedLocationText}>
+      {/* ── DARK MODE: selected location text ── */}
+      <Text style={[styles.selectedLocationText, { color: darkMode ? '#5a8a95' : '#888' }]}>
         Showing for: {selectedLocation}
       </Text>
 
@@ -158,14 +178,17 @@ export default function SearchScreen() {
             key={index}
             style={[
               styles.categoryPill,
-              selectedCategory === item && styles.activeCategory
+              // ── DARK MODE: unselected chip bg ──
+              { backgroundColor: darkMode ? colors.card : '#F1F1F1' },
+              selectedCategory === item && styles.activeCategory,
             ]}
             onPress={() => setSelectedCategory(item)}
           >
             <Text
               style={[
                 styles.categoryText,
-                selectedCategory === item && { color: '#fff' }
+                // ── DARK MODE: unselected chip text ──
+                { color: selectedCategory === item ? '#fff' : colors.text },
               ]}
             >
               {item}
@@ -176,43 +199,36 @@ export default function SearchScreen() {
 
       {/* FOR YOU */}
       <View style={styles.sectionHeader}>
-        <Text style={styles.sectionTitle}>For You</Text>
+        <Text style={[styles.sectionTitle, { color: colors.text }]}>For You</Text>
         <Text style={styles.seeAll}>See All</Text>
       </View>
 
+      {/* Cards — image cards stay the same, text on top of image is always white */}
       {filteredHotels.map(item => (
         <View key={item.id} style={styles.card}>
-
           <Image source={{ uri: item.image }} style={styles.cardImage} />
-
           <View style={styles.overlay} />
-
           <View style={styles.cardContent}>
             <Text style={styles.cardTitle}>{item.name}</Text>
             <Text style={styles.cardLocation}>📍 {item.location}</Text>
-
             <View style={styles.cardBottom}>
-              <Text style={styles.cardPrice}>
-                ${item.price}/Night
-              </Text>
-
+              <Text style={styles.cardPrice}>${item.price}/Night</Text>
               <View style={styles.rating}>
                 <Text>⭐ {item.rating || 4.9}</Text>
               </View>
             </View>
           </View>
-
         </View>
       ))}
 
     </ScrollView>
   );
 }
+
 const styles = StyleSheet.create({
 
   container: {
     flex: 1,
-    backgroundColor: '#fff',
     padding: 15,
   },
 
@@ -237,12 +253,13 @@ const styles = StyleSheet.create({
 
   hello: {
     fontSize: 12,
-    color: '#777',
+    // color removed — set inline dynamically
   },
 
   name: {
     fontSize: 16,
     fontWeight: 'bold',
+    // color removed — set inline dynamically
   },
 
   rightHeader: {
@@ -253,7 +270,7 @@ const styles = StyleSheet.create({
     width: 35,
     height: 35,
     borderRadius: 20,
-    backgroundColor: '#F1F1F1',
+    // backgroundColor removed — set inline dynamically
     justifyContent: 'center',
     alignItems: 'center',
     marginLeft: 10,
@@ -268,7 +285,7 @@ const styles = StyleSheet.create({
   },
 
   locationPill: {
-    backgroundColor: '#DFF3F0',
+    // backgroundColor removed — set inline dynamically
     paddingHorizontal: 14,
     paddingVertical: 8,
     borderRadius: 20,
@@ -277,12 +294,13 @@ const styles = StyleSheet.create({
   locationText: {
     fontSize: 12,
     fontWeight: '600',
+    // color removed — set inline dynamically
   },
 
   searchBar: {
     flex: 1,
     flexDirection: 'row',
-    backgroundColor: '#F1F1F1',
+    // backgroundColor removed — set inline dynamically
     borderRadius: 20,
     paddingHorizontal: 15,
     alignItems: 'center',
@@ -299,6 +317,7 @@ const styles = StyleSheet.create({
   sectionTitle: {
     fontSize: 16,
     fontWeight: 'bold',
+    // color removed — set inline dynamically
   },
 
   seeAll: {
@@ -311,7 +330,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 14,
     paddingVertical: 8,
     borderRadius: 20,
-    backgroundColor: '#F1F1F1',
+    // backgroundColor removed — set inline dynamically
     marginRight: 10,
   },
 
@@ -321,9 +340,10 @@ const styles = StyleSheet.create({
 
   categoryText: {
     fontSize: 12,
+    // color removed — set inline dynamically
   },
 
-  /* CARD */
+  /* CARD — unchanged, text sits on image so always white */
   card: {
     height: 180,
     borderRadius: 20,
@@ -377,25 +397,27 @@ const styles = StyleSheet.create({
     paddingVertical: 3,
     borderRadius: 10,
   },
+
   dropdown: {
-  position: 'absolute',
-  top: 45,
-  right: 0,
-  backgroundColor: '#fff',
-  borderRadius: 10,
-  elevation: 5,
-  padding: 10,
-  zIndex: 999,
-},
+    position: 'absolute',
+    top: 45,
+    right: 0,
+    // backgroundColor removed — set inline dynamically
+    borderRadius: 10,
+    elevation: 5,
+    padding: 10,
+    zIndex: 999,
+  },
 
-dropdownItem: {
-  paddingVertical: 5,
-},
+  dropdownItem: {
+    paddingVertical: 5,
+    // color removed — set inline dynamically
+  },
 
-selectedLocationText: {
-  fontSize: 12,
-  color: '#888',
-  marginBottom: 10,
-},
+  selectedLocationText: {
+    fontSize: 12,
+    marginBottom: 10,
+    // color removed — set inline dynamically
+  },
 
 });

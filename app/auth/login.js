@@ -4,9 +4,14 @@ import { signInWithEmailAndPassword } from "firebase/auth";
 import { doc, getDoc } from "firebase/firestore";
 import { auth, db } from "../../firebase/firebaseConfig";
 import { useRouter } from "expo-router";
+import { useTheme } from "../../context/ThemeContext"; // ← ADD
 
 export default function Login() {
   const router = useRouter();
+
+  // ── DARK MODE ──
+  const { theme } = useTheme();
+  const { colors, darkMode } = theme;
 
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -20,25 +25,20 @@ export default function Login() {
 
     setLoading(true);
     try {
-      // 1. Sign in with Firebase Auth
       const userCredential = await signInWithEmailAndPassword(auth, email, password);
       const user = userCredential.user;
 
-      // 2. Fetch the user doc from Firestore to check role
       const docRef = doc(db, "users", user.uid);
       const docSnap = await getDoc(docRef);
 
       if (docSnap.exists()) {
         const userData = docSnap.data();
-
-        // 3. Route based on role
         if (userData.role === "admin") {
-          router.replace("/admin"); // go to admin dashboard
+          router.replace("/admin");
         } else {
-          router.replace("/(tabs)"); // go to normal user home
+          router.replace("/(tabs)");
         }
       } else {
-        // No user doc found — treat as regular user
         router.replace("/(tabs)");
       }
 
@@ -50,15 +50,27 @@ export default function Login() {
   };
 
   return (
-    <View style={styles.container}>
+    // ── DARK MODE: container bg ──
+    <View style={[styles.container, { backgroundColor: colors.background }]}>
 
       <Text style={styles.title}>Welcome Back</Text>
-      <Text style={styles.subtitle}>Sign in to your account</Text>
+      {/* ── DARK MODE: subtitle ── */}
+      <Text style={[styles.subtitle, { color: darkMode ? '#5a8a95' : '#888' }]}>
+        Sign in to your account
+      </Text>
 
+      {/* ── DARK MODE: inputs ── */}
       <TextInput
         placeholder="Email"
-        placeholderTextColor="#aaa"
-        style={styles.input}
+        placeholderTextColor={darkMode ? '#5a7a82' : '#aaa'}
+        style={[
+          styles.input,
+          {
+            backgroundColor: colors.card,
+            color: colors.text,
+            borderColor: darkMode ? '#1e3d47' : '#ddd',
+          }
+        ]}
         onChangeText={setEmail}
         value={email}
         keyboardType="email-address"
@@ -67,13 +79,21 @@ export default function Login() {
 
       <TextInput
         placeholder="Password"
-        placeholderTextColor="#aaa"
+        placeholderTextColor={darkMode ? '#5a7a82' : '#aaa'}
         secureTextEntry
-        style={styles.input}
+        style={[
+          styles.input,
+          {
+            backgroundColor: colors.card,
+            color: colors.text,
+            borderColor: darkMode ? '#1e3d47' : '#ddd',
+          }
+        ]}
         onChangeText={setPassword}
         value={password}
       />
 
+      {/* Button — brand color, unchanged */}
       <TouchableOpacity
         style={[styles.button, loading && { opacity: 0.7 }]}
         onPress={handleLogin}
@@ -86,7 +106,10 @@ export default function Login() {
       </TouchableOpacity>
 
       <View style={styles.signupRow}>
-        <Text style={styles.text}>Don't have an account?</Text>
+        {/* ── DARK MODE: signup text ── */}
+        <Text style={[styles.text, { color: darkMode ? '#5a8a95' : '#888' }]}>
+          Don't have an account?
+        </Text>
         <TouchableOpacity onPress={() => router.push("/auth/signup")}>
           <Text style={styles.link}> Sign Up</Text>
         </TouchableOpacity>
@@ -100,31 +123,26 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     justifyContent: "center",
-    padding: 24,
-    backgroundColor: "#dcdcdc",
+    padding: 24,                      // bg set inline
   },
   title: {
     fontSize: 28,
-    color: "#3aa0b8",
+    color: "#3aa0b8",                 // brand color, unchanged
     marginBottom: 6,
     textAlign: "center",
     fontWeight: "bold",
   },
   subtitle: {
     fontSize: 14,
-    color: "#888",
     textAlign: "center",
-    marginBottom: 28,
+    marginBottom: 28,                 // color set inline
   },
   input: {
-    backgroundColor: "#fff",
-    color: "#222",
     padding: 14,
     borderRadius: 10,
     marginBottom: 14,
     fontSize: 15,
-    borderWidth: 1,
-    borderColor: "#ddd",
+    borderWidth: 1,                   // bg, color, borderColor set inline
   },
   button: {
     backgroundColor: "#3aa0b8",
@@ -144,9 +162,7 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     marginTop: 22,
   },
-  text: {
-    color: "#888",
-  },
+  text: { },                          // color set inline
   link: {
     color: "#3aa0b8",
     fontWeight: "bold",

@@ -17,8 +17,9 @@ import Svg, { Path, Circle, Rect, Line, Polyline } from 'react-native-svg';
 import { auth } from '../../firebase/firebaseConfig';
 import { updatePassword } from 'firebase/auth';
 import { useRouter } from 'expo-router';
+import { useTheme } from '../../context/ThemeContext'; // ← ADD
 
-// ─── SVG ICONS ───────────────────────────────────────────────────────
+// ─── SVG ICONS (unchanged) ────────────────────────────────────────────
 
 const IconArrowLeft = ({ size = 22, color = '#fff' }) => (
   <Svg width={size} height={size} viewBox="0 0 24 24" fill="none"
@@ -63,6 +64,11 @@ const IconShield = ({ size = 48, color = 'rgba(255,255,255,0.9)' }) => (
 // ─── MAIN COMPONENT ──────────────────────────────────────────────────
 export default function UpdatePassword() {
   const router = useRouter();
+
+  // ── DARK MODE ──
+  const { theme } = useTheme();
+  const { colors, darkMode } = theme;
+
   const [newPassword, setNewPassword]   = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading]           = useState(false);
@@ -103,8 +109,8 @@ export default function UpdatePassword() {
   };
 
   return (
-    <SafeAreaView style={s.safe}>
-      <StatusBar barStyle="light-content" backgroundColor="#3aa0b8" />
+    <SafeAreaView style={[s.safe, { backgroundColor: PRIMARY }]}>
+      <StatusBar barStyle="light-content" backgroundColor={PRIMARY} />
 
       <KeyboardAvoidingView
         style={{ flex: 1 }}
@@ -116,7 +122,7 @@ export default function UpdatePassword() {
           keyboardShouldPersistTaps="handled"
         >
 
-          {/* ── HERO ── */}
+          {/* ── HERO — always brand-colored, unchanged ── */}
           <View style={s.hero}>
             <View style={s.heroCircle1} />
             <View style={s.heroCircle2} />
@@ -138,19 +144,30 @@ export default function UpdatePassword() {
           </View>
 
           {/* ── FORM CARD ── */}
-          <View style={s.card}>
+          {/* ── DARK MODE: card background ── */}
+          <View style={[s.card, { backgroundColor: colors.background }]}>
 
-            <Text style={s.inputLabel}>New Password</Text>
+            {/* ── DARK MODE: label ── */}
+            <Text style={[s.inputLabel, { color: darkMode ? '#5a8a95' : '#8aa5ac' }]}>
+              New Password
+            </Text>
 
-            <View style={s.inputWrap}>
+            {/* ── DARK MODE: input wrap ── */}
+            <View style={[
+              s.inputWrap,
+              {
+                backgroundColor: colors.card,
+                borderColor: darkMode ? '#1e3d47' : '#e0ecef',
+              }
+            ]}>
               <View style={s.inputIcon}>
                 <IconLock size={18} color="#3aa0b8" />
               </View>
 
               <TextInput
-                style={s.input}
+                style={[s.input, { color: colors.text }]}
                 placeholder="Enter new password"
-                placeholderTextColor="#b0c4ca"
+                placeholderTextColor={darkMode ? '#5a7a82' : '#b0c4ca'}
                 secureTextEntry={!showPassword}
                 value={newPassword}
                 onChangeText={setNewPassword}
@@ -164,12 +181,13 @@ export default function UpdatePassword() {
                 activeOpacity={0.7}
               >
                 {showPassword
-                  ? <IconEyeOff size={19} color="#94aab0" />
-                  : <IconEye    size={19} color="#94aab0" />
+                  ? <IconEyeOff size={19} color={darkMode ? '#5a7a82' : '#94aab0'} />
+                  : <IconEye    size={19} color={darkMode ? '#5a7a82' : '#94aab0'} />
                 }
               </TouchableOpacity>
             </View>
 
+            {/* Button — brand color, unchanged */}
             <TouchableOpacity
               style={[s.button, loading && s.buttonDisabled]}
               onPress={handleUpdatePassword}
@@ -182,12 +200,15 @@ export default function UpdatePassword() {
               }
             </TouchableOpacity>
 
+            {/* ── DARK MODE: cancel text ── */}
             <TouchableOpacity
               style={s.cancelBtn}
               onPress={() => router.back()}
               activeOpacity={0.7}
             >
-              <Text style={s.cancelText}>Cancel</Text>
+              <Text style={[s.cancelText, { color: darkMode ? '#5a7a82' : '#94aab0' }]}>
+                Cancel
+              </Text>
             </TouchableOpacity>
 
           </View>
@@ -200,14 +221,13 @@ export default function UpdatePassword() {
 
 // ─── STYLES ──────────────────────────────────────────────────────────
 const PRIMARY = '#3aa0b8';
-const BG      = '#f0f4f5';
 
 const s = StyleSheet.create({
 
-  safe:          { flex: 1, backgroundColor: PRIMARY },
+  safe:          { flex: 1 },            // ← bg set inline from PRIMARY
   scrollContent: { flexGrow: 1 },
 
-  // Hero
+  // Hero — always brand-colored, unchanged
   hero: {
     backgroundColor: PRIMARY,
     paddingTop: 16,
@@ -244,9 +264,8 @@ const s = StyleSheet.create({
   heroTitle: { fontSize: 22, fontWeight: '700', color: '#fff', letterSpacing: 0.2, marginBottom: 6 },
   heroSub:   { fontSize: 13.5, color: 'rgba(255,255,255,0.7)', textAlign: 'center' },
 
-  // Card
+  // Card — bg now set inline
   card: {
-    backgroundColor: BG,
     marginTop: -22,
     borderTopLeftRadius: 24,
     borderTopRightRadius: 24,
@@ -256,11 +275,10 @@ const s = StyleSheet.create({
     flex: 1,
   },
 
-  // Input
+  // Input — label color, wrap bg/border set inline
   inputLabel: {
     fontSize: 12,
     fontWeight: '600',
-    color: '#8aa5ac',
     textTransform: 'uppercase',
     letterSpacing: 0.9,
     marginBottom: 10,
@@ -269,10 +287,8 @@ const s = StyleSheet.create({
   inputWrap: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#fff',
     borderRadius: 14,
     borderWidth: 1.5,
-    borderColor: '#e0ecef',
     paddingHorizontal: 14,
     height: 54,
     marginBottom: 24,
@@ -283,17 +299,10 @@ const s = StyleSheet.create({
     elevation: 2,
   },
   inputIcon: { marginRight: 10 },
-  input: {
-    flex: 1,
-    fontSize: 15,
-    color: '#1a3a42',
-  },
-  eyeBtn: {
-    padding: 4,
-    marginLeft: 8,
-  },
+  input:     { flex: 1, fontSize: 15 }, // color set inline
+  eyeBtn:    { padding: 4, marginLeft: 8 },
 
-  // Button
+  // Button — brand color, unchanged
   button: {
     backgroundColor: PRIMARY,
     height: 54,
@@ -311,5 +320,5 @@ const s = StyleSheet.create({
   buttonText: { fontSize: 15.5, fontWeight: '700', color: '#fff', letterSpacing: 0.3 },
 
   cancelBtn:  { alignItems: 'center', paddingVertical: 10 },
-  cancelText: { fontSize: 14, color: '#94aab0', fontWeight: '500' },
-})
+  cancelText: { fontSize: 14, fontWeight: '500' }, // color set inline
+});

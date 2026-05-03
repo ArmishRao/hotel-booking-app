@@ -10,12 +10,13 @@ import {
   Switch,
   Modal,
 } from 'react-native';
+import { useTheme } from '../../context/ThemeContext';
 import Svg, { Path, Circle, Rect, Line, Polyline } from 'react-native-svg';
 import { useRouter } from 'expo-router';
 import { signOut } from 'firebase/auth';
 import { auth } from '../../firebase/firebaseConfig';
 
-// ─── ICONS ───────────────────────────────────────────────────────────
+// ─── ICONS (unchanged) ───────────────────────────────────────────────
 
 const IconUser = ({ size = 18, color = '#3aa0b8' }) => (
   <Svg width={size} height={size} viewBox="0 0 24 24" fill="none"
@@ -92,7 +93,8 @@ const IconSettings = ({ size = 44, color = 'rgba(255,255,255,0.92)' }) => (
 );
 
 // ─── MENU ITEM COMPONENT ─────────────────────────────────────────────
-const MenuItem = ({ icon: Icon, iconBg, iconColor, label, onPress, isLast, right }) => (
+// Accepts labelColor so dark mode can override the text color
+const MenuItem = ({ icon: Icon, iconBg, iconColor, label, onPress, isLast, right, labelColor }) => (
   <TouchableOpacity
     style={[s.menuItem, !isLast && s.menuItemBorder]}
     onPress={onPress}
@@ -101,7 +103,7 @@ const MenuItem = ({ icon: Icon, iconBg, iconColor, label, onPress, isLast, right
     <View style={[s.menuIcon, { backgroundColor: iconBg }]}>
       <Icon size={18} color={iconColor} />
     </View>
-    <Text style={s.menuLabel}>{label}</Text>
+    <Text style={[s.menuLabel, labelColor ? { color: labelColor } : {}]}>{label}</Text>
     {right ?? <IconChevron size={17} color="#b8cdd2" />}
   </TouchableOpacity>
 );
@@ -109,8 +111,12 @@ const MenuItem = ({ icon: Icon, iconBg, iconColor, label, onPress, isLast, right
 // ─── MAIN COMPONENT ──────────────────────────────────────────────────
 export default function SettingsScreen() {
   const router = useRouter();
+
+  // ── DARK MODE: pull theme from context ──
+  const { theme, setDarkMode } = useTheme();
+  const { colors, darkMode } = theme;
+
   const [notifications, setNotifications] = useState(true);
-  const [darkMode, setDarkMode]           = useState(false);
   const [logoutModal, setLogoutModal]     = useState(false);
 
   const handleLogout = async () => {
@@ -124,64 +130,88 @@ export default function SettingsScreen() {
   };
 
   return (
-    <SafeAreaView style={s.safe}>
-      <StatusBar barStyle="light-content" backgroundColor="#3aa0b8" />
+    // ── DARK MODE: hero color on safe area bg ──
+    <SafeAreaView style={[s.safe, { backgroundColor: colors.hero }]}>
+
+      {/* ── DARK MODE: status bar bg ── */}
+      <StatusBar barStyle="light-content" backgroundColor={colors.hero} />
 
       {/* ── HERO ── */}
-      <View style={s.hero}>
+      {/* ── DARK MODE: hero bg ── */}
+      <View style={[s.hero, { backgroundColor: colors.hero }]}>
         <View style={s.heroCircle1} />
         <View style={s.heroCircle2} />
-
         <View style={s.settingsIconWrap}>
           <IconSettings size={44} />
         </View>
-
         <Text style={s.heroTitle}>Settings</Text>
         <Text style={s.heroSub}>Manage your account and app preferences</Text>
       </View>
 
+      {/* ── DARK MODE: scroll bg ── */}
       <ScrollView
-        style={s.scroll}
+        style={{ backgroundColor: colors.background }}
         contentContainerStyle={s.scrollContent}
         showsVerticalScrollIndicator={false}
       >
-        <View style={s.body}>
+        {/* ── DARK MODE: body bg ── */}
+        <View style={[s.body, { backgroundColor: colors.background }]}>
 
           {/* ── ACCOUNT ── */}
-          <Text style={s.sectionLabel}>Account</Text>
-          <View style={s.menuCard}>
+          {/* ── DARK MODE: section label color ── */}
+          <Text style={[s.sectionLabel, { color: colors.sectionLabel }]}>Account</Text>
+
+          {/* ── DARK MODE: card bg ── */}
+          <View style={[s.menuCard, { backgroundColor: colors.card }]}>
             <MenuItem
-              icon={IconUser}   iconBg="#e4f5f9" iconColor="#3aa0b8"
+              icon={IconUser}
+              iconBg={colors.iconBgBlue}       // ── DARK MODE
+              iconColor="#3aa0b8"
               label="My Account"
+              labelColor={colors.text}          // ── DARK MODE
               onPress={() => router.push('/account')}
             />
             <MenuItem
-              icon={IconLock}   iconBg="#e4f5f9" iconColor="#3aa0b8"
+              icon={IconLock}
+              iconBg={colors.iconBgBlue}        // ── DARK MODE
+              iconColor="#3aa0b8"
               label="Change Password"
+              labelColor={colors.text}          // ── DARK MODE
               onPress={() => router.push('/account/update-password')}
             />
             <MenuItem
-              icon={IconHelp}   iconBg="#e4f5f9" iconColor="#3aa0b8"
+              icon={IconHelp}
+              iconBg={colors.iconBgBlue}        // ── DARK MODE
+              iconColor="#3aa0b8"
               label="Help & Support"
+              labelColor={colors.text}          // ── DARK MODE
               onPress={() => router.push('/support')}
             />
             <MenuItem
-              icon={IconFile}   iconBg="#eeebfd" iconColor="#7c6fcd"
+              icon={IconFile}
+              iconBg={colors.iconBgPurple}      // ── DARK MODE
+              iconColor="#7c6fcd"
               label="Terms & Conditions"
+              labelColor={colors.text}          // ── DARK MODE
               onPress={() => router.push('/terms')}
               isLast
             />
           </View>
 
           {/* ── PREFERENCES ── */}
-          <Text style={s.sectionLabel}>Preferences</Text>
-          <View style={s.menuCard}>
+          {/* ── DARK MODE: section label color ── */}
+          <Text style={[s.sectionLabel, { color: colors.sectionLabel }]}>Preferences</Text>
+
+          {/* ── DARK MODE: card bg ── */}
+          <View style={[s.menuCard, { backgroundColor: colors.card }]}>
+
             {/* Notifications toggle */}
             <View style={[s.menuItem, s.menuItemBorder]}>
               <View style={[s.menuIcon, { backgroundColor: '#fef3e2' }]}>
                 <IconBell size={18} color="#d97706" />
               </View>
-              <Text style={s.menuLabel}>Notifications</Text>
+              {/* ── DARK MODE: label text ── */}
+              <Text style={[s.menuLabel, { color: colors.text }]}>Notifications</Text>
               <Switch
                 value={notifications}
                 onValueChange={setNotifications}
@@ -193,13 +223,16 @@ export default function SettingsScreen() {
 
             {/* Dark mode toggle */}
             <View style={s.menuItem}>
-              <View style={[s.menuIcon, { backgroundColor: '#eeebfd' }]}>
+              {/* ── DARK MODE: icon bg ── */}
+              <View style={[s.menuIcon, { backgroundColor: colors.iconBgPurple }]}>
                 <IconMoon size={18} color="#7c6fcd" />
               </View>
-              <Text style={s.menuLabel}>Dark Mode</Text>
+              {/* ── DARK MODE: label text ── */}
+              <Text style={[s.menuLabel, { color: colors.text }]}>Dark Mode</Text>
+              {/* ── DARK MODE: toggle connected to context ── */}
               <Switch
                 value={darkMode}
-                onValueChange={setDarkMode}
+                onValueChange={(val) => setDarkMode(val)}
                 trackColor={{ false: '#d9e6ea', true: '#3aa0b8' }}
                 thumbColor="#fff"
                 ios_backgroundColor="#d9e6ea"
@@ -208,8 +241,11 @@ export default function SettingsScreen() {
           </View>
 
           {/* ── SESSION ── */}
-          <Text style={s.sectionLabel}>Session</Text>
-          <View style={s.menuCard}>
+          {/* ── DARK MODE: section label color ── */}
+          <Text style={[s.sectionLabel, { color: colors.sectionLabel }]}>Session</Text>
+
+          {/* ── DARK MODE: card bg ── */}
+          <View style={[s.menuCard, { backgroundColor: colors.card }]}>
             <TouchableOpacity
               style={s.menuItem}
               onPress={() => setLogoutModal(true)}
@@ -227,6 +263,7 @@ export default function SettingsScreen() {
       </ScrollView>
 
       {/* ── LOGOUT MODAL ── */}
+      {/* ── DARK MODE: modal box bg + text colors ── */}
       <Modal
         transparent
         visible={logoutModal}
@@ -234,20 +271,20 @@ export default function SettingsScreen() {
         onRequestClose={() => setLogoutModal(false)}
       >
         <View style={s.modalOverlay}>
-          <View style={s.modalBox}>
+          <View style={[s.modalBox, { backgroundColor: colors.card }]}>
 
             <View style={s.modalIconWrap}>
               <IconLogOut size={26} color="#dc4a4a" />
             </View>
 
-            <Text style={s.modalTitle}>Log out?</Text>
+            <Text style={[s.modalTitle, { color: colors.text }]}>Log out?</Text>
             <Text style={s.modalSub}>
               You'll be signed out and returned to the login screen.
             </Text>
 
             <View style={s.modalActions}>
               <TouchableOpacity
-                style={s.btnCancel}
+                style={[s.btnCancel, { backgroundColor: colors.background }]}
                 onPress={() => setLogoutModal(false)}
                 activeOpacity={0.75}
               >
@@ -266,23 +303,22 @@ export default function SettingsScreen() {
           </View>
         </View>
       </Modal>
+
     </SafeAreaView>
   );
 }
 
 // ─── STYLES ──────────────────────────────────────────────────────────
+// Static styles only — dynamic colors are applied inline above
 const PRIMARY = '#3aa0b8';
-const BG      = '#f0f4f5';
 
 const s = StyleSheet.create({
 
-  safe:   { flex: 1, backgroundColor: PRIMARY },
-  scroll: { backgroundColor: BG },
+  safe:          { flex: 1 },
   scrollContent: { paddingBottom: 48 },
 
   // Hero
   hero: {
-    backgroundColor: PRIMARY,
     paddingTop: 20,
     paddingHorizontal: 20,
     paddingBottom: 52,
@@ -311,7 +347,6 @@ const s = StyleSheet.create({
 
   // Body
   body: {
-    backgroundColor: BG,
     marginTop: -22,
     borderTopLeftRadius: 24,
     borderTopRightRadius: 24,
@@ -322,7 +357,6 @@ const s = StyleSheet.create({
   sectionLabel: {
     fontSize: 11,
     fontWeight: '600',
-    color: '#8aa5ac',
     textTransform: 'uppercase',
     letterSpacing: 1,
     marginLeft: 4,
@@ -332,7 +366,6 @@ const s = StyleSheet.create({
 
   // Menu card
   menuCard: {
-    backgroundColor: '#fff',
     borderRadius: 18,
     overflow: 'hidden',
     marginBottom: 16,
@@ -362,19 +395,17 @@ const s = StyleSheet.create({
     flex: 1,
     fontSize: 14.5,
     fontWeight: '500',
-    color: '#1a3a42',
     letterSpacing: 0.1,
   },
 
   // Modal
   modalOverlay: {
     flex: 1,
-    backgroundColor: 'rgba(10,30,35,0.45)',
+    backgroundColor: 'rgba(10,30,35,0.55)',
     justifyContent: 'center',
     alignItems: 'center',
   },
   modalBox: {
-    backgroundColor: '#fff',
     borderRadius: 24,
     paddingHorizontal: 24,
     paddingVertical: 28,
@@ -393,7 +424,7 @@ const s = StyleSheet.create({
     justifyContent: 'center', alignItems: 'center',
     marginBottom: 16,
   },
-  modalTitle: { fontSize: 18, fontWeight: '700', color: '#1a3a42', marginBottom: 8 },
+  modalTitle: { fontSize: 18, fontWeight: '700', marginBottom: 8 },
   modalSub: {
     fontSize: 13.5, color: '#7fa0a8',
     textAlign: 'center', lineHeight: 20, marginBottom: 24,
@@ -401,7 +432,6 @@ const s = StyleSheet.create({
   modalActions: { flexDirection: 'row', gap: 10, width: '100%' },
   btnCancel: {
     flex: 1, paddingVertical: 14,
-    backgroundColor: '#f0f4f5',
     borderRadius: 14, alignItems: 'center',
   },
   btnCancelText: { fontSize: 14, fontWeight: '600', color: '#4a7a85' },

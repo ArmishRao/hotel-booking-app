@@ -1,9 +1,9 @@
 import { Stack } from 'expo-router';
 import { AuthProvider } from '../context/AuthContext';
-
+import { ThemeProvider } from '../context/ThemeContext';
 export default function Layout() {
   return (
-
+  <ThemeProvider>
   <AuthProvider>
     <Stack>
       <Stack.Screen name="index" options={{ headerShown: false }} />
@@ -14,5 +14,6 @@ export default function Layout() {
       <Stack.Screen name="admin" options={{ headerShown: false }} />
     </Stack>
     </AuthProvider>
+    </ThemeProvider>
   );
 }

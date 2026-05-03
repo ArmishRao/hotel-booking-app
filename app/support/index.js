@@ -11,10 +11,11 @@ import {
   Linking,
   Alert,
 } from 'react-native';
+import { useTheme } from '../../context/ThemeContext';
 import Svg, { Path, Circle, Line, Polyline, Rect } from 'react-native-svg';
 import { useRouter } from 'expo-router';
 
-// ─── ICONS ───────────────────────────────────────────────────────────
+// ─── ICONS (unchanged) ────────────────────────────────────────────────
 
 const IconArrowLeft = ({ size = 22, color = '#fff' }) => (
   <Svg width={size} height={size} viewBox="0 0 24 24" fill="none"
@@ -104,7 +105,7 @@ const IconCreditCard = ({ size = 16, color = '#e05c8a' }) => (
   </Svg>
 );
 
-// ─── FAQ DATA ─────────────────────────────────────────────────────────
+// ─── FAQ DATA (unchanged) ─────────────────────────────────────────────
 const FAQS = [
   {
     icon: IconHotel,  iconBg: '#e4f5f9', iconColor: '#3aa0b8',
@@ -129,13 +130,16 @@ const FAQS = [
 ];
 
 // ─── FAQ CARD ─────────────────────────────────────────────────────────
-const FaqCard = ({ item, isLast }) => {
+const FaqCard = ({ item, isLast, colors, darkMode }) => {
   const [open, setOpen] = useState(false);
   const ItemIcon = item.icon;
 
   return (
     <TouchableOpacity
-      style={[s.faqCard, !isLast && s.faqCardBorder]}
+      style={[
+        s.faqCard,
+        !isLast && [s.faqCardBorder, { borderBottomColor: darkMode ? '#1e3d47' : '#edf1f2' }],
+      ]}
       onPress={() => setOpen((v) => !v)}
       activeOpacity={0.75}
     >
@@ -143,14 +147,17 @@ const FaqCard = ({ item, isLast }) => {
         <View style={[s.faqIconWrap, { backgroundColor: item.iconBg }]}>
           <ItemIcon size={15} color={item.iconColor} />
         </View>
-        <Text style={s.faqQuestion}>{item.q}</Text>
+        {/* ── DARK MODE: question text ── */}
+        <Text style={[s.faqQuestion, { color: colors.text }]}>{item.q}</Text>
         <IconChevronDown size={16} color="#b0c4ca" flipped={open} />
       </View>
 
       {open && (
         <View style={s.faqBody}>
-          <View style={s.faqDivider} />
-          <Text style={s.faqAnswer}>{item.a}</Text>
+          {/* ── DARK MODE: divider ── */}
+          <View style={[s.faqDivider, { backgroundColor: darkMode ? '#1e3d47' : '#edf1f2' }]} />
+          {/* ── DARK MODE: answer text ── */}
+          <Text style={[s.faqAnswer, { color: darkMode ? '#5a8a95' : '#4a6870' }]}>{item.a}</Text>
         </View>
       )}
     </TouchableOpacity>
@@ -160,6 +167,11 @@ const FaqCard = ({ item, isLast }) => {
 // ─── MAIN COMPONENT ──────────────────────────────────────────────────
 export default function SupportScreen() {
   const router = useRouter();
+
+  // ── DARK MODE ──
+  const { theme } = useTheme();
+  const { colors, darkMode } = theme;
+
   const [search, setSearch] = useState('');
 
   const filtered = FAQS.filter((item) =>
@@ -167,19 +179,15 @@ export default function SupportScreen() {
   );
 
   return (
-    <SafeAreaView style={s.safe}>
-      <StatusBar barStyle="light-content" backgroundColor="#3aa0b8" />
+    <SafeAreaView style={[s.safe, { backgroundColor: PRIMARY }]}>
+      <StatusBar barStyle="light-content" backgroundColor={PRIMARY} />
 
-      {/* ── HERO ── */}
+      {/* ── HERO — always brand-colored, unchanged ── */}
       <View style={s.hero}>
         <View style={s.heroCircle1} />
         <View style={s.heroCircle2} />
 
-        <TouchableOpacity
-          style={s.backBtn}
-          onPress={() => router.back()}
-          activeOpacity={0.75}
-        >
+        <TouchableOpacity style={s.backBtn} onPress={() => router.back()} activeOpacity={0.75}>
           <IconArrowLeft size={22} color="#fff" />
         </TouchableOpacity>
 
@@ -190,7 +198,7 @@ export default function SupportScreen() {
         <Text style={s.heroTitle}>Help & Support</Text>
         <Text style={s.heroSub}>Find answers or get in touch with our team</Text>
 
-        {/* Search bar inside hero */}
+        {/* Search bar — stays white inside hero */}
         <View style={s.searchWrap}>
           <View style={s.searchIcon}>
             <IconSearch size={17} color="#94aab0" />
@@ -206,36 +214,59 @@ export default function SupportScreen() {
         </View>
       </View>
 
+      {/* ── DARK MODE: scroll bg ── */}
       <ScrollView
-        style={s.scroll}
+        style={[s.scroll, { backgroundColor: colors.background }]}
         contentContainerStyle={s.scrollContent}
         showsVerticalScrollIndicator={false}
         keyboardShouldPersistTaps="handled"
       >
-        <View style={s.body}>
+        {/* ── DARK MODE: body bg ── */}
+        <View style={[s.body, { backgroundColor: colors.background }]}>
 
           {/* ── FAQs ── */}
-          <Text style={s.sectionLabel}>Frequently Asked</Text>
+          {/* ── DARK MODE: section label ── */}
+          <Text style={[s.sectionLabel, { color: darkMode ? '#5a8a95' : '#8aa5ac' }]}>
+            Frequently Asked
+          </Text>
 
-          <View style={s.faqCard_outer}>
+          {/* ── DARK MODE: faq outer card bg ── */}
+          <View style={[s.faqCard_outer, { backgroundColor: colors.card }]}>
             {filtered.length > 0 ? (
               filtered.map((item, i) => (
-                <FaqCard key={i} item={item} isLast={i === filtered.length - 1} />
+                <FaqCard
+                  key={i}
+                  item={item}
+                  isLast={i === filtered.length - 1}
+                  colors={colors}
+                  darkMode={darkMode}
+                />
               ))
             ) : (
               <View style={s.emptyWrap}>
-                <Text style={s.emptyText}>No results for "{search}"</Text>
+                {/* ── DARK MODE: empty text ── */}
+                <Text style={[s.emptyText, { color: darkMode ? '#5a7a82' : '#94aab0' }]}>
+                  No results for "{search}"
+                </Text>
               </View>
             )}
           </View>
 
           {/* ── CONTACT ── */}
-          <Text style={s.sectionLabel}>Get in Touch</Text>
+          <Text style={[s.sectionLabel, { color: darkMode ? '#5a8a95' : '#8aa5ac' }]}>
+            Get in Touch
+          </Text>
 
-          <View style={s.contactCard}>
+          {/* ── DARK MODE: contact card bg ── */}
+          <View style={[s.contactCard, { backgroundColor: colors.card }]}>
+
             {/* Email support */}
             <TouchableOpacity
-              style={[s.contactRow, s.contactRowBorder]}
+              style={[
+                s.contactRow,
+                s.contactRowBorder,
+                { borderBottomColor: darkMode ? '#1e3d47' : '#edf1f2' },
+              ]}
               onPress={() => Linking.openURL('mailto:support@hotelapp.com')}
               activeOpacity={0.7}
             >
@@ -243,8 +274,11 @@ export default function SupportScreen() {
                 <IconMail size={20} color="#3aa0b8" />
               </View>
               <View style={s.contactTextWrap}>
-                <Text style={s.contactTitle}>Email Support</Text>
-                <Text style={s.contactSub}>support@hotelapp.com</Text>
+                {/* ── DARK MODE: contact title + sub ── */}
+                <Text style={[s.contactTitle, { color: colors.text }]}>Email Support</Text>
+                <Text style={[s.contactSub, { color: darkMode ? '#5a8a95' : '#7fa0a8' }]}>
+                  support@hotelapp.com
+                </Text>
               </View>
               <IconChevronDown size={16} color="#b8cdd2"
                 style={{ transform: [{ rotate: '-90deg' }] }} />
@@ -260,18 +294,23 @@ export default function SupportScreen() {
                 <IconAlertTriangle size={20} color="#e05c5c" />
               </View>
               <View style={s.contactTextWrap}>
-                <Text style={s.contactTitle}>Report an Issue</Text>
-                <Text style={s.contactSub}>Let us know what went wrong</Text>
+                <Text style={[s.contactTitle, { color: colors.text }]}>Report an Issue</Text>
+                <Text style={[s.contactSub, { color: darkMode ? '#5a8a95' : '#7fa0a8' }]}>
+                  Let us know what went wrong
+                </Text>
               </View>
               <IconChevronDown size={16} color="#b8cdd2"
                 style={{ transform: [{ rotate: '-90deg' }] }} />
             </TouchableOpacity>
+
           </View>
 
-          {/* Response time note */}
-          <View style={s.noteCard}>
+          {/* Note card */}
+          {/* ── DARK MODE: note card bg ── */}
+          <View style={[s.noteCard, { backgroundColor: colors.card }]}>
             <View style={s.noteLine} />
-            <Text style={s.noteText}>
+            {/* ── DARK MODE: note text ── */}
+            <Text style={[s.noteText, { color: darkMode ? '#5a8a95' : '#4a7a85' }]}>
               Our support team typically responds within 24 hours on business days.
             </Text>
           </View>
@@ -282,17 +321,16 @@ export default function SupportScreen() {
   );
 }
 
-// ─── STYLES ──────────────────────────────────────────────────────────
+// ─── STYLES — remove hardcoded bg colors now set inline ──────────────
 const PRIMARY = '#3aa0b8';
-const BG      = '#f0f4f5';
 
 const s = StyleSheet.create({
 
-  safe:   { flex: 1, backgroundColor: PRIMARY },
-  scroll: { backgroundColor: BG },
+  safe:          { flex: 1 },            // ← bg set inline from PRIMARY
+  scroll:        {},                     // ← bg set inline from colors.background
   scrollContent: { paddingBottom: 48 },
 
-  // Hero
+  // Hero — always brand-colored, unchanged
   hero: {
     backgroundColor: PRIMARY,
     paddingTop: 16,
@@ -312,8 +350,7 @@ const s = StyleSheet.create({
     bottom: 20, left: -40,
   },
   backBtn: {
-    alignSelf: 'flex-start',
-    width: 38, height: 38,
+    alignSelf: 'flex-start', width: 38, height: 38,
     backgroundColor: 'rgba(255,255,255,0.2)',
     borderRadius: 11,
     justifyContent: 'center', alignItems: 'center',
@@ -329,27 +366,21 @@ const s = StyleSheet.create({
   heroTitle: { fontSize: 22, fontWeight: '700', color: '#fff', letterSpacing: 0.2, marginBottom: 6 },
   heroSub:   { fontSize: 13, color: 'rgba(255,255,255,0.68)', textAlign: 'center', marginBottom: 20 },
 
-  // Search
+  // Search — stays white inside hero, unchanged
   searchWrap: {
-    flexDirection: 'row',
-    alignItems: 'center',
+    flexDirection: 'row', alignItems: 'center',
     backgroundColor: '#fff',
-    borderRadius: 14,
-    paddingHorizontal: 14,
-    height: 48,
-    width: '100%',
+    borderRadius: 14, paddingHorizontal: 14,
+    height: 48, width: '100%',
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.08,
-    shadowRadius: 10,
-    elevation: 4,
+    shadowOpacity: 0.08, shadowRadius: 10, elevation: 4,
   },
   searchIcon:  { marginRight: 10 },
   searchInput: { flex: 1, fontSize: 14.5, color: '#1a3a42' },
 
-  // Body
+  // Body — bg set inline
   body: {
-    backgroundColor: BG,
     marginTop: -18,
     borderTopLeftRadius: 24,
     borderTopRightRadius: 24,
@@ -357,118 +388,54 @@ const s = StyleSheet.create({
     paddingHorizontal: 16,
   },
   sectionLabel: {
-    fontSize: 11,
-    fontWeight: '600',
-    color: '#8aa5ac',
-    textTransform: 'uppercase',
-    letterSpacing: 1,
-    marginLeft: 4,
-    marginBottom: 10,
-    marginTop: 4,
+    fontSize: 11, fontWeight: '600',
+    textTransform: 'uppercase', letterSpacing: 1,
+    marginLeft: 4, marginBottom: 10, marginTop: 4,
   },
 
-  // FAQ outer card
+  // FAQ — bg set inline
   faqCard_outer: {
-    backgroundColor: '#fff',
-    borderRadius: 18,
-    overflow: 'hidden',
+    borderRadius: 18, overflow: 'hidden',
     marginBottom: 16,
     shadowColor: PRIMARY,
     shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.06,
-    shadowRadius: 8,
-    elevation: 2,
+    shadowOpacity: 0.06, shadowRadius: 8, elevation: 2,
   },
-  faqCard: {
-    paddingHorizontal: 16,
-    paddingTop: 14,
-    paddingBottom: 14,
-  },
-  faqCardBorder: {
-    borderBottomWidth: 0.6,
-    borderBottomColor: '#edf1f2',
-  },
-  faqHeader: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 12,
-  },
-  faqIconWrap: {
-    width: 32, height: 32,
-    borderRadius: 9,
-    justifyContent: 'center', alignItems: 'center',
-    flexShrink: 0,
-  },
-  faqQuestion: {
-    flex: 1, fontSize: 14, fontWeight: '600',
-    color: '#1a3a42', letterSpacing: 0.1,
-  },
-  faqDivider: {
-    height: 1, backgroundColor: '#edf1f2', marginVertical: 10,
-  },
-  faqBody: {},
-  faqAnswer: {
-    fontSize: 13.5, color: '#4a6870',
-    lineHeight: 20, fontWeight: '400',
-  },
+  faqCard:       { paddingHorizontal: 16, paddingTop: 14, paddingBottom: 14 },
+  faqCardBorder: { borderBottomWidth: 0.6 }, // color set inline
+  faqHeader:     { flexDirection: 'row', alignItems: 'center', gap: 12 },
+  faqIconWrap:   { width: 32, height: 32, borderRadius: 9, justifyContent: 'center', alignItems: 'center', flexShrink: 0 },
+  faqQuestion:   { flex: 1, fontSize: 14, fontWeight: '600', letterSpacing: 0.1 }, // color set inline
+  faqDivider:    { height: 1, marginVertical: 10 },                                // color set inline
+  faqBody:       {},
+  faqAnswer:     { fontSize: 13.5, lineHeight: 20, fontWeight: '400' },            // color set inline
 
-  // Empty state
+  // Empty
   emptyWrap: { padding: 24, alignItems: 'center' },
-  emptyText: { fontSize: 14, color: '#94aab0', fontWeight: '500' },
+  emptyText: { fontSize: 14, fontWeight: '500' },  // color set inline
 
-  // Contact card
+  // Contact — bg set inline
   contactCard: {
-    backgroundColor: '#fff',
-    borderRadius: 18,
-    overflow: 'hidden',
-    marginBottom: 16,
+    borderRadius: 18, overflow: 'hidden', marginBottom: 16,
     shadowColor: PRIMARY,
     shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.06,
-    shadowRadius: 8,
-    elevation: 2,
+    shadowOpacity: 0.06, shadowRadius: 8, elevation: 2,
   },
-  contactRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingVertical: 15,
-    paddingHorizontal: 16,
-    gap: 13,
-  },
-  contactRowBorder: {
-    borderBottomWidth: 0.6,
-    borderBottomColor: '#edf1f2',
-  },
-  contactIconWrap: {
-    width: 44, height: 44,
-    borderRadius: 13,
-    justifyContent: 'center', alignItems: 'center',
-    flexShrink: 0,
-  },
-  contactTextWrap: { flex: 1 },
-  contactTitle: { fontSize: 14.5, fontWeight: '600', color: '#1a3a42', marginBottom: 2 },
-  contactSub:   { fontSize: 12.5, color: '#7fa0a8', fontWeight: '400' },
+  contactRow:       { flexDirection: 'row', alignItems: 'center', paddingVertical: 15, paddingHorizontal: 16, gap: 13 },
+  contactRowBorder: { borderBottomWidth: 0.6 },  // color set inline
+  contactIconWrap:  { width: 44, height: 44, borderRadius: 13, justifyContent: 'center', alignItems: 'center', flexShrink: 0 },
+  contactTextWrap:  { flex: 1 },
+  contactTitle:     { fontSize: 14.5, fontWeight: '600', marginBottom: 2 },  // color set inline
+  contactSub:       { fontSize: 12.5, fontWeight: '400' },                   // color set inline
 
-  // Note card
+  // Note — bg set inline
   noteCard: {
-    flexDirection: 'row',
-    backgroundColor: '#fff',
-    borderRadius: 14,
-    padding: 14,
-    gap: 12,
-    marginBottom: 8,
+    flexDirection: 'row', borderRadius: 14,
+    padding: 14, gap: 12, marginBottom: 8,
     shadowColor: PRIMARY,
     shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.04,
-    shadowRadius: 4,
-    elevation: 1,
+    shadowOpacity: 0.04, shadowRadius: 4, elevation: 1,
   },
-  noteLine: {
-    width: 3, borderRadius: 2,
-    backgroundColor: PRIMARY,
-  },
-  noteText: {
-    flex: 1, fontSize: 13, color: '#4a7a85',
-    lineHeight: 19, fontWeight: '400',
-  },
+  noteLine: { width: 3, borderRadius: 2, backgroundColor: PRIMARY },
+  noteText:  { flex: 1, fontSize: 13, lineHeight: 19, fontWeight: '400' },  // color set inline
 });

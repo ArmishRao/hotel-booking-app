@@ -1,6 +1,7 @@
 import { db } from '../../firebase/firebaseConfig';
 import { collection, getDocs } from 'firebase/firestore';
 import { AuthContext } from '../../context/AuthContext';
+import { useTheme } from '../../context/ThemeContext'; // ← ADD
 import React, { useEffect, useState, useContext } from 'react';
 import {
   View,
@@ -12,10 +13,13 @@ import {
 } from 'react-native';
 import { useRouter } from 'expo-router';
 import styles from '../../styles/HomeStyles';
-export default function Home() {
-    const { userData } = useContext(AuthContext);  
 
-    const router = useRouter(); 
+export default function Home() {
+  const { userData } = useContext(AuthContext);
+  const router = useRouter();
+
+  const { theme } = useTheme();
+  const { colors, darkMode } = theme;
 
   const [hotels, setHotels] = useState([]);
   const [categories, setCategories] = useState([]);
@@ -77,34 +81,45 @@ export default function Home() {
   };
 
   return (
-    <ScrollView style={styles.container} showsVerticalScrollIndicator={false}>
+    <ScrollView
+      style={[styles.container, { backgroundColor: colors.background }]}
+      showsVerticalScrollIndicator={false}
+    >
 
       {/* HEADER */}
-      <View style={styles.header}>
+      <View style={[styles.header, { backgroundColor: colors.hero }]}>
 
-  {/* LEFT: USER INFO */}
-  <View style={styles.leftHeader}>
-    <Image
-      source={{ uri: 'https://i.pravatar.cc/100' }} // dummy profile
-      style={styles.profilePic}
-    />
-    <View>
-      <Text style={styles.hello}>Hello</Text>
-<Text style={styles.name}>{userData?.name || userData?.username || 'User'}</Text>
-    </View>
-  </View>
+        {/* LEFT: USER INFO */}
+        <View style={styles.leftHeader}>
+          <Image
+            source={{ uri: 'https://i.pravatar.cc/100' }}
+            style={styles.profilePic}
+          />
+          <View>
+            <Text style={[styles.hello, { color: 'rgba(255,255,255,0.75)' }]}>
+              Hello
+            </Text>
+            <Text style={[styles.name, { color: '#fff' }]}>
+              {userData?.name || userData?.username || 'User'}
+            </Text>
+          </View>
+        </View>
 
         {/* MIDDLE: APP NAME */}
         <View style={styles.centerHeader}>
-          <Text style={styles.appName}>HotelBookings</Text>
+          <Text style={[styles.appName, { color: '#fff' }]}>HotelBookings</Text>
         </View>
 
         {/* RIGHT: ICONS */}
         <View style={styles.rightHeader}>
-          <TouchableOpacity style={styles.iconCircle}>
+          <TouchableOpacity
+            style={[styles.iconCircle, { backgroundColor: 'rgba(255,255,255,0.2)' }]}
+          >
             <Text style={styles.iconText}>🔔</Text>
           </TouchableOpacity>
-          <TouchableOpacity style={styles.iconCircle}>
+          <TouchableOpacity
+            style={[styles.iconCircle, { backgroundColor: 'rgba(255,255,255,0.2)' }]}
+          >
             <Text style={styles.iconText}>⋮</Text>
           </TouchableOpacity>
         </View>
@@ -112,28 +127,47 @@ export default function Home() {
       </View>
 
       {/* SEARCH + LOCATION */}
-      <View style={styles.searchRow}>
+      <View style={[styles.searchRow, { backgroundColor: colors.background }]}>
 
         <TextInput
           placeholder="Search by name..."
-          placeholderTextColor="#888"
+          placeholderTextColor={darkMode ? '#5a7a82' : '#888'}
           value={searchText}
           onChangeText={setSearchText}
-          style={styles.search}
+          style={[
+            styles.search,
+            {
+              backgroundColor: colors.card,
+              color: colors.text,
+              borderColor: darkMode ? '#2a3d4d' : '#e0eaed',
+            }
+          ]}
         />
 
         <View style={{ position: 'relative' }}>
           <TouchableOpacity
-            style={styles.locationBoxRight}
+            style={[
+              styles.locationBoxRight,
+              {
+                backgroundColor: colors.card,
+                borderColor: darkMode ? '#2a3d4d' : '#e0eaed',
+              }
+            ]}
             onPress={() => setShowLocations(!showLocations)}
           >
-            <Text style={{ fontSize: 12 }}>
+            <Text style={{ fontSize: 12, color: colors.text }}>
               📍 {selectedLocation} ⌄
             </Text>
           </TouchableOpacity>
 
           {showLocations && (
-            <View style={styles.dropdownRight}>
+            <View style={[
+              styles.dropdownRight,
+              {
+                backgroundColor: colors.card,
+                borderColor: darkMode ? '#2a3d4d' : '#e0eaed',
+              }
+            ]}>
               {locations.map((loc, index) => (
                 <Text
                   key={index}
@@ -141,7 +175,7 @@ export default function Home() {
                     setSelectedLocation(loc);
                     setShowLocations(false);
                   }}
-                  style={styles.dropdownItem}
+                  style={[styles.dropdownItem, { color: colors.text }]}
                 >
                   {loc}
                 </Text>
@@ -153,8 +187,8 @@ export default function Home() {
       </View>
 
       {/* POPULAR */}
-      <View style={styles.sectionHeader}>
-        <Text style={styles.sectionTitle}>Popular</Text>
+      <View style={[styles.sectionHeader, { backgroundColor: colors.background }]}>
+        <Text style={[styles.sectionTitle, { color: colors.text }]}>Popular</Text>
         <Text style={styles.seeAll}>See All</Text>
       </View>
 
@@ -166,13 +200,12 @@ export default function Home() {
               : normalize(item.location) === normalize(selectedLocation)
           )
           .map(item => (
-            // ✅ NOW CLICKABLE
             <TouchableOpacity
               key={item.id}
               onPress={() => goToDetail(item.id)}
               activeOpacity={0.85}
             >
-              <View style={styles.popularCard}>
+              <View style={[styles.popularCard, { backgroundColor: colors.card }]}>
                 <Image source={{ uri: item.image }} style={styles.popularImage} />
                 <View style={styles.overlay} />
                 <View style={styles.popularContent}>
@@ -191,24 +224,37 @@ export default function Home() {
       </ScrollView>
 
       {/* CATEGORIES */}
-      <View style={styles.sectionHeader}>
-        <Text style={styles.sectionTitle}>Categories</Text>
+      <View style={[styles.sectionHeader, { backgroundColor: colors.background }]}>
+        <Text style={[styles.sectionTitle, { color: colors.text }]}>Categories</Text>
         <Text style={styles.seeAll}>See All</Text>
       </View>
 
       <ScrollView horizontal showsHorizontalScrollIndicator={false}>
-        <View style={[styles.chip, selectedCategory === "All" && styles.activeChip]}>
-          <Text onPress={() => setSelectedCategory("All")}>All</Text>
+        <View style={[
+          styles.chip,
+          { backgroundColor: colors.card, borderColor: darkMode ? '#2a3d4d' : '#e0eaed' },
+          selectedCategory === "All" && styles.activeChip,
+        ]}>
+          <Text
+            onPress={() => setSelectedCategory("All")}
+            style={{ color: selectedCategory === "All" ? '#fff' : colors.text }}
+          >
+            All
+          </Text>
         </View>
 
         {categories.map((item, index) => (
           <View
             key={index}
-            style={[styles.chip, selectedCategory === item && styles.activeChip]}
+            style={[
+              styles.chip,
+              { backgroundColor: colors.card, borderColor: darkMode ? '#2a3d4d' : '#e0eaed' },
+              selectedCategory === item && styles.activeChip,
+            ]}
           >
             <Text
               onPress={() => setSelectedCategory(item)}
-              style={[selectedCategory === item && { color: '#fff' }]}
+              style={{ color: selectedCategory === item ? '#fff' : colors.text }}
             >
               {item}
             </Text>
@@ -217,23 +263,26 @@ export default function Home() {
       </ScrollView>
 
       {/* RECOMMENDATION */}
-      <View style={styles.sectionHeader}>
-        <Text style={styles.sectionTitle}>Recommendation</Text>
+      <View style={[styles.sectionHeader, { backgroundColor: colors.background }]}>
+        <Text style={[styles.sectionTitle, { color: colors.text }]}>Recommendation</Text>
         <Text style={styles.seeAll}>See All</Text>
       </View>
 
       <ScrollView horizontal showsHorizontalScrollIndicator={false}>
         {filteredHotels.map(item => (
-          // ✅ NOW CLICKABLE
           <TouchableOpacity
             key={item.id}
             onPress={() => goToDetail(item.id)}
             activeOpacity={0.85}
           >
-            <View style={styles.recommendCard}>
+            <View style={[styles.recommendCard, { backgroundColor: colors.card }]}>
               <Image source={{ uri: item.image }} style={styles.recommendImage} />
-              <Text style={styles.recommendName}>{item.name}</Text>
-              <Text style={styles.recommendPrice}>${item.price}</Text>
+              <Text style={[styles.recommendName, { color: colors.text }]}>
+                {item.name}
+              </Text>
+              <Text style={[styles.recommendPrice, { color: colors.sectionLabel }]}>
+                ${item.price}
+              </Text>
             </View>
           </TouchableOpacity>
         ))}

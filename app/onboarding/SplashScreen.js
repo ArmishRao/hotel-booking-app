@@ -7,15 +7,20 @@ import {
   StatusBar,
   TouchableOpacity,
 } from 'react-native';
+import { useTheme } from '../../context/ThemeContext'; // ← ADD
 
 const BRAND_NAME = 'PƎLAGIA';
 
 export default function SplashScreen({ onFinish }) {
-  const logoOpacity = useRef(new Animated.Value(0)).current;
-  const logoScale = useRef(new Animated.Value(0.85)).current;
+  // ── DARK MODE (StatusBar only) ──
+  const { theme } = useTheme();
+  const { darkMode } = theme;
+
+  const logoOpacity      = useRef(new Animated.Value(0)).current;
+  const logoScale        = useRef(new Animated.Value(0.85)).current;
   const indicatorOpacity = useRef(new Animated.Value(0)).current;
-  const dotOpacity = useRef(new Animated.Value(0)).current;
-  const buttonOpacity = useRef(new Animated.Value(0)).current;
+  const dotOpacity       = useRef(new Animated.Value(0)).current;
+  const buttonOpacity    = useRef(new Animated.Value(0)).current;
 
   useEffect(() => {
     Animated.parallel([
@@ -33,20 +38,22 @@ export default function SplashScreen({ onFinish }) {
         Animated.timing(dotOpacity, {
           toValue: 1, duration: 400, delay: 150, useNativeDriver: true,
         }),
-        // Button fades in after logo animation
         Animated.timing(buttonOpacity, {
           toValue: 1, duration: 500, delay: 300, useNativeDriver: true,
         }),
       ]).start();
 
-      // Auto-advance after 2 seconds
       if (onFinish) setTimeout(onFinish, 2000);
     });
   }, []);
 
   return (
     <View style={styles.container}>
-      <StatusBar barStyle="light-content" backgroundColor="#3AADBE" />
+      {/* ── DARK MODE: StatusBar only ── */}
+      <StatusBar
+        barStyle="light-content"
+        backgroundColor={darkMode ? '#2d8a9e' : '#3AADBE'}
+      />
 
       {/* BRAND NAME */}
       <Animated.View style={[styles.logoContainer, {
@@ -56,14 +63,13 @@ export default function SplashScreen({ onFinish }) {
         <Text style={styles.logoText}>{BRAND_NAME}</Text>
       </Animated.View>
 
-      {/* BOTTOM AREA: indicator + arrow button */}
+      {/* BOTTOM AREA */}
       <View style={styles.bottomArea}>
         <Animated.View style={[styles.indicatorRow, { opacity: indicatorOpacity }]}>
           <View style={styles.indicator} />
           <Animated.View style={[styles.dot, { opacity: dotOpacity }]} />
         </Animated.View>
 
-        {/* FORWARD ARROW BUTTON */}
         <Animated.View style={{ opacity: buttonOpacity, marginTop: 28 }}>
           <TouchableOpacity style={styles.arrowButton} onPress={onFinish}>
             <Text style={styles.arrowText}>→</Text>

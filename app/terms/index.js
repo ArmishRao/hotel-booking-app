@@ -10,8 +10,9 @@ import {
 } from 'react-native';
 import Svg, { Path, Circle, Rect, Line, Polyline } from 'react-native-svg';
 import { useRouter } from 'expo-router';
+import { useTheme } from '../../context/ThemeContext'; // ← ADD
 
-// ─── ICONS ───────────────────────────────────────────────────────────
+// ─── ICONS (unchanged) ────────────────────────────────────────────────
 
 const IconArrowLeft = ({ size = 22, color = '#fff' }) => (
   <Svg width={size} height={size} viewBox="0 0 24 24" fill="none"
@@ -32,7 +33,6 @@ const IconFile = ({ size = 46, color = 'rgba(255,255,255,0.92)' }) => (
   </Svg>
 );
 
-// Section-specific icons
 const IconMonitor = ({ size = 18, color = '#3aa0b8' }) => (
   <Svg width={size} height={size} viewBox="0 0 24 24" fill="none"
     stroke={color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -77,58 +77,38 @@ const IconRefreshCw = ({ size = 18, color = '#3aa0b8' }) => (
   </Svg>
 );
 
-// ─── TERMS DATA ───────────────────────────────────────────────────────
+// ─── TERMS DATA (unchanged) ───────────────────────────────────────────
 const TERMS = [
   {
-    number: '01',
-    title: 'Use of App',
-    Icon: IconMonitor,
-    iconBg: '#e4f5f9',
-    content:
-      'You must use this app only for lawful purposes and in a way that does not harm the app or other users. Any misuse may result in account suspension.',
+    number: '01', title: 'Use of App', Icon: IconMonitor, iconBg: '#e4f5f9',
+    content: 'You must use this app only for lawful purposes and in a way that does not harm the app or other users. Any misuse may result in account suspension.',
   },
   {
-    number: '02',
-    title: 'Bookings',
-    Icon: IconCalendar,
-    iconBg: '#eeebfd',
-    content:
-      'All hotel bookings are subject to availability and confirmation. We reserve the right to cancel bookings if necessary and will notify you promptly.',
+    number: '02', title: 'Bookings', Icon: IconCalendar, iconBg: '#eeebfd',
+    content: 'All hotel bookings are subject to availability and confirmation. We reserve the right to cancel bookings if necessary and will notify you promptly.',
   },
   {
-    number: '03',
-    title: 'Payments',
-    Icon: IconCreditCard,
-    iconBg: '#fdedf3',
-    content:
-      'Payments must be completed through approved payment methods. We are not responsible for external payment failures or third-party processing issues.',
+    number: '03', title: 'Payments', Icon: IconCreditCard, iconBg: '#fdedf3',
+    content: 'Payments must be completed through approved payment methods. We are not responsible for external payment failures or third-party processing issues.',
   },
   {
-    number: '04',
-    title: 'User Data',
-    Icon: IconUser,
-    iconBg: '#fef3e2',
-    content:
-      'We store your basic information such as name, email, and profile image to provide a better experience. Your data is never sold to third parties.',
+    number: '04', title: 'User Data', Icon: IconUser, iconBg: '#fef3e2',
+    content: 'We store your basic information such as name, email, and profile image to provide a better experience. Your data is never sold to third parties.',
   },
   {
-    number: '05',
-    title: 'Changes to Terms',
-    Icon: IconRefreshCw,
-    iconBg: '#e4f5f9',
-    content:
-      'We may update these terms at any time. Continued use of the app following any changes means you accept the updated terms and conditions.',
+    number: '05', title: 'Changes to Terms', Icon: IconRefreshCw, iconBg: '#e4f5f9',
+    content: 'We may update these terms at any time. Continued use of the app following any changes means you accept the updated terms and conditions.',
   },
 ];
 
 // ─── TERM CARD ────────────────────────────────────────────────────────
-const TermCard = ({ item }) => {
+const TermCard = ({ item, colors, darkMode }) => {
   const [expanded, setExpanded] = useState(true);
   const ItemIcon = item.Icon;
 
   return (
     <TouchableOpacity
-      style={s.termCard}
+      style={[s.termCard, { backgroundColor: colors.card }]}
       onPress={() => setExpanded((v) => !v)}
       activeOpacity={0.85}
     >
@@ -138,11 +118,16 @@ const TermCard = ({ item }) => {
         </View>
 
         <View style={s.termTitleWrap}>
-          <Text style={s.termNumber}>{item.number}</Text>
-          <Text style={s.termTitle}>{item.title}</Text>
+          {/* ── DARK MODE: term number ── */}
+          <Text style={[s.termNumber, { color: darkMode ? '#5a7a82' : '#b0c4ca' }]}>
+            {item.number}
+          </Text>
+          {/* ── DARK MODE: term title ── */}
+          <Text style={[s.termTitle, { color: colors.text }]}>{item.title}</Text>
         </View>
 
-        <View style={[s.chevronWrap, expanded && s.chevronWrapOpen]}>
+        {/* ── DARK MODE: chevron bg ── */}
+        <View style={[s.chevronWrap, { backgroundColor: darkMode ? '#1e3d47' : '#f0f4f5' }, expanded && s.chevronWrapOpen]}>
           <Svg width={14} height={14} viewBox="0 0 24 24" fill="none"
             stroke="#94aab0" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
             <Polyline points="6 9 12 15 18 9" />
@@ -152,8 +137,12 @@ const TermCard = ({ item }) => {
 
       {expanded && (
         <View style={s.termBody}>
-          <View style={s.termDivider} />
-          <Text style={s.termText}>{item.content}</Text>
+          {/* ── DARK MODE: divider ── */}
+          <View style={[s.termDivider, { backgroundColor: darkMode ? '#1e3d47' : '#edf1f2' }]} />
+          {/* ── DARK MODE: term text ── */}
+          <Text style={[s.termText, { color: darkMode ? '#5a8a95' : '#4a6870' }]}>
+            {item.content}
+          </Text>
         </View>
       )}
     </TouchableOpacity>
@@ -164,20 +153,20 @@ const TermCard = ({ item }) => {
 export default function TermsScreen() {
   const router = useRouter();
 
-  return (
-    <SafeAreaView style={s.safe}>
-      <StatusBar barStyle="light-content" backgroundColor="#3aa0b8" />
+  // ── DARK MODE ──
+  const { theme } = useTheme();
+  const { colors, darkMode } = theme;
 
-      {/* ── HERO ── */}
+  return (
+    <SafeAreaView style={[s.safe, { backgroundColor: PRIMARY }]}>
+      <StatusBar barStyle="light-content" backgroundColor={PRIMARY} />
+
+      {/* ── HERO — always brand-colored, unchanged ── */}
       <View style={s.hero}>
         <View style={s.heroCircle1} />
         <View style={s.heroCircle2} />
 
-        <TouchableOpacity
-          style={s.backBtn}
-          onPress={() => router.back()}
-          activeOpacity={0.75}
-        >
+        <TouchableOpacity style={s.backBtn} onPress={() => router.back()} activeOpacity={0.75}>
           <IconArrowLeft size={22} color="#fff" />
         </TouchableOpacity>
 
@@ -189,32 +178,38 @@ export default function TermsScreen() {
         <Text style={s.heroSub}>Please read these terms carefully before using our service</Text>
       </View>
 
-      {/* ── CONTENT ── */}
+      {/* ── DARK MODE: scroll bg ── */}
       <ScrollView
-        style={s.scroll}
+        style={[s.scroll, { backgroundColor: colors.background }]}
         contentContainerStyle={s.scrollContent}
         showsVerticalScrollIndicator={false}
       >
-        <View style={s.body}>
+        {/* ── DARK MODE: body bg ── */}
+        <View style={[s.body, { backgroundColor: colors.background }]}>
 
           {/* Intro card */}
-          <View style={s.introCard}>
+          {/* ── DARK MODE: intro card bg ── */}
+          <View style={[s.introCard, { backgroundColor: colors.card }]}>
             <View style={s.introLine} />
-            <Text style={s.introText}>
+            {/* ── DARK MODE: intro text ── */}
+            <Text style={[s.introText, { color: darkMode ? '#5a8a95' : '#4a7a85' }]}>
               By using the Hotel Booking App, you agree to be bound by the following terms and conditions. These govern your use of our platform and services.
             </Text>
           </View>
 
           {/* Term cards */}
           {TERMS.map((item) => (
-            <TermCard key={item.number} item={item} />
+            <TermCard key={item.number} item={item} colors={colors} darkMode={darkMode} />
           ))}
 
           {/* Footer */}
           <View style={s.footer}>
-            <View style={s.footerDot} />
-            <Text style={s.footerText}>Last updated: January 2026</Text>
-            <View style={s.footerDot} />
+            <View style={[s.footerDot, { backgroundColor: darkMode ? '#1e3d47' : '#c0d0d4' }]} />
+            {/* ── DARK MODE: footer text ── */}
+            <Text style={[s.footerText, { color: darkMode ? '#5a7a82' : '#94aab0' }]}>
+              Last updated: January 2026
+            </Text>
+            <View style={[s.footerDot, { backgroundColor: darkMode ? '#1e3d47' : '#c0d0d4' }]} />
           </View>
 
         </View>
@@ -225,23 +220,30 @@ export default function TermsScreen() {
 
 // ─── STYLES ───────────────────────────────────────────────────────────
 const PRIMARY = '#3aa0b8';
-const BG      = '#f0f4f5';
 
 const s = StyleSheet.create({
 
-  safe: { flex: 1, backgroundColor: PRIMARY },
+  safe: { flex: 1 },  // ← bg set inline from PRIMARY
 
-  // Hero
+  // Hero — always brand-colored, unchanged
   hero: {
     backgroundColor: PRIMARY,
     paddingHorizontal: 0,
     paddingBottom: 12,
     alignItems: 'center',
   },
- 
+  heroCircle1: {
+    position: 'absolute', width: 200, height: 200, borderRadius: 100,
+    backgroundColor: 'rgba(255,255,255,0.07)',
+    top: -60, right: -50,
+  },
+  heroCircle2: {
+    position: 'absolute', width: 130, height: 130, borderRadius: 65,
+    backgroundColor: 'rgba(255,255,255,0.05)',
+    bottom: 20, left: -40,
+  },
   backBtn: {
-    alignSelf: 'flex-start',
-    width: 38, height: 38,
+    alignSelf: 'flex-start', width: 38, height: 38,
     backgroundColor: 'rgba(255,255,255,0.2)',
     borderRadius: 11,
     justifyContent: 'center', alignItems: 'center',
@@ -255,17 +257,14 @@ const s = StyleSheet.create({
     marginBottom: 16,
   },
   heroTitle: { fontSize: 22, fontWeight: '700', color: '#fff', letterSpacing: 0.2, marginBottom: 8 },
-  heroSub: {
-    fontSize: 13, color: 'rgba(255,255,255,0.68)',
-    textAlign: 'center', lineHeight: 19, paddingHorizontal: 10,
-  },
+  heroSub:   { fontSize: 13, color: 'rgba(255,255,255,0.68)', textAlign: 'center', lineHeight: 19, paddingHorizontal: 10 },
 
-  // Scroll
-  scroll:        { backgroundColor: BG },
+  // Scroll — bg set inline
+  scroll:        {},
   scrollContent: { paddingBottom: 40 },
 
+  // Body — bg set inline
   body: {
-    backgroundColor: BG,
     marginTop: -22,
     borderTopLeftRadius: 24,
     borderTopRightRadius: 24,
@@ -273,101 +272,38 @@ const s = StyleSheet.create({
     paddingHorizontal: 16,
   },
 
-  // Intro card
+  // Intro card — bg set inline
   introCard: {
     flexDirection: 'row',
-    backgroundColor: '#fff',
-    borderRadius: 14,
-    padding: 16,
-    marginBottom: 16,
-    gap: 12,
+    borderRadius: 14, padding: 16, marginBottom: 16, gap: 12,
     shadowColor: PRIMARY,
     shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.05,
-    shadowRadius: 6,
-    elevation: 1,
+    shadowOpacity: 0.05, shadowRadius: 6, elevation: 1,
   },
-  introLine: {
-    width: 3, borderRadius: 2,
-    backgroundColor: PRIMARY,
-  },
-  introText: {
-    flex: 1, fontSize: 13.5, color: '#4a7a85',
-    lineHeight: 20, fontWeight: '400',
-  },
+  introLine: { width: 3, borderRadius: 2, backgroundColor: PRIMARY },
+  introText: { flex: 1, fontSize: 13.5, lineHeight: 20, fontWeight: '400' }, // color set inline
 
-  // Term card
+  // Term card — bg set inline
   termCard: {
-    backgroundColor: '#fff',
-    borderRadius: 16,
-    marginBottom: 10,
-    paddingHorizontal: 16,
-    paddingTop: 16,
-    paddingBottom: 16,
+    borderRadius: 16, marginBottom: 10,
+    paddingHorizontal: 16, paddingTop: 16, paddingBottom: 16,
     shadowColor: PRIMARY,
     shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.05,
-    shadowRadius: 6,
-    elevation: 1,
+    shadowOpacity: 0.05, shadowRadius: 6, elevation: 1,
   },
-  termHeader: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 12,
-  },
-  termIconWrap: {
-    width: 40, height: 40,
-    borderRadius: 12,
-    justifyContent: 'center', alignItems: 'center',
-    flexShrink: 0,
-  },
+  termHeader:    { flexDirection: 'row', alignItems: 'center', gap: 12 },
+  termIconWrap:  { width: 40, height: 40, borderRadius: 12, justifyContent: 'center', alignItems: 'center', flexShrink: 0 },
   termTitleWrap: { flex: 1 },
-  termNumber: {
-    fontSize: 10, fontWeight: '700',
-    color: '#b0c4ca',
-    letterSpacing: 1,
-    textTransform: 'uppercase',
-    marginBottom: 1,
-  },
-  termTitle: {
-    fontSize: 15, fontWeight: '600',
-    color: '#1a3a42',
-  },
-  chevronWrap: {
-    width: 28, height: 28,
-    backgroundColor: '#f0f4f5',
-    borderRadius: 8,
-    justifyContent: 'center', alignItems: 'center',
-  },
-  chevronWrapOpen: {
-    transform: [{ rotate: '180deg' }],
-  },
-
-  termDivider: {
-    height: 1,
-    backgroundColor: '#edf1f2',
-    marginVertical: 12,
-  },
-  termBody: {},
-  termText: {
-    fontSize: 13.5, color: '#4a6870',
-    lineHeight: 21, fontWeight: '400',
-  },
+  termNumber:    { fontSize: 10, fontWeight: '700', letterSpacing: 1, textTransform: 'uppercase', marginBottom: 1 }, // color set inline
+  termTitle:     { fontSize: 15, fontWeight: '600' },  // color set inline
+  chevronWrap:   { width: 28, height: 28, borderRadius: 8, justifyContent: 'center', alignItems: 'center' }, // bg set inline
+  chevronWrapOpen: { transform: [{ rotate: '180deg' }] },
+  termDivider:   { height: 1, marginVertical: 12 },    // bg set inline
+  termBody:      {},
+  termText:      { fontSize: 13.5, lineHeight: 21, fontWeight: '400' }, // color set inline
 
   // Footer
-  footer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: 8,
-    marginTop: 20,
-    marginBottom: 4,
-  },
-  footerDot: {
-    width: 4, height: 4, borderRadius: 2,
-    backgroundColor: '#c0d0d4',
-  },
-  footerText: {
-    fontSize: 12, color: '#94aab0', fontWeight: '500',
-  },
+  footer:    { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8, marginTop: 20, marginBottom: 4 },
+  footerDot: { width: 4, height: 4, borderRadius: 2 }, // bg set inline
+  footerText: { fontSize: 12, fontWeight: '500' },      // color set inline
 });

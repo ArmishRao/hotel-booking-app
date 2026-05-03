@@ -11,13 +11,14 @@ import {
   StatusBar,
   SafeAreaView,
 } from 'react-native';
+import { useTheme } from '../../../context/ThemeContext';
 import Svg, { Path, Circle, Rect, Line, Polyline } from 'react-native-svg';
 import { auth, db } from '../../../firebase/firebaseConfig';
 import { doc, getDoc } from 'firebase/firestore';
 import { signOut } from 'firebase/auth';
 import { useRouter } from 'expo-router';
 
-// ─── SVG ICONS (Feather-style, clean strokes) ───────────────────────
+// ─── SVG ICONS (unchanged) ───────────────────────────────────────────
 
 const IconUser = ({ size = 20, color = '#3aa0b8' }) => (
   <Svg width={size} height={size} viewBox="0 0 24 24" fill="none"
@@ -109,42 +110,46 @@ const IconChevron = ({ size = 18, color = '#b0c4ca' }) => (
   </Svg>
 );
 
-// ─── MENU CONFIG ────────────────────────────────────────────────────
-const MENU_SECTIONS = [
+// ─── MENU CONFIG ─────────────────────────────────────────────────────
+// iconBg is now a function so it can return dark/light color dynamically
+const getMenuSections = (colors) => [
   {
     label: 'Account',
     items: [
-      { title: 'My Account',       route: '/account',                Icon: IconUser,     iconBg: '#e4f5f9', badge: null },
-      { title: 'Update Password',  route: '/account/update-password', Icon: IconLock,    iconBg: '#e4f5f9', badge: null },
-      { title: 'Notifications',    route: '/notification',           Icon: IconBell,     iconBg: '#fef3e2', badge: '3'  },
+      { title: 'My Account',      route: '/account',                 Icon: IconUser,     iconBg: colors.iconBgBlue,   badge: null },
+      { title: 'Update Password', route: '/account/update-password', Icon: IconLock,     iconBg: colors.iconBgBlue,   badge: null },
+      { title: 'Notifications',   route: '/notification',            Icon: IconBell,     iconBg: colors.iconBgAmber,  badge: '3'  },
     ],
   },
   {
     label: 'Activity',
     items: [
-      { title: 'Favorites', route: '/favorite', Icon: IconHeart,    iconBg: '#fdedf3', badge: null },
-      { title: 'History',   route: '/history',  Icon: IconClock,    iconBg: '#e4f5f9', badge: null },
-      { title: 'Settings',  route: '/settings', Icon: IconSettings, iconBg: '#eeebfd', badge: null },
+      { title: 'Favorites', route: '/favorite', Icon: IconHeart,    iconBg: colors.iconBgPink,   badge: null },
+      { title: 'History',   route: '/history',  Icon: IconClock,    iconBg: colors.iconBgBlue,   badge: null },
+      { title: 'Settings',  route: '/settings', Icon: IconSettings, iconBg: colors.iconBgPurple, badge: null },
     ],
   },
   {
     label: 'Support',
     items: [
-      { title: 'Help & Support',     route: '/support', Icon: IconHelp, iconBg: '#e4f5f9', badge: null },
-      { title: 'Terms & Conditions', route: '/terms',   Icon: IconFile, iconBg: '#eeebfd', badge: null },
+      { title: 'Help & Support',     route: '/support', Icon: IconHelp, iconBg: colors.iconBgBlue,   badge: null },
+      { title: 'Terms & Conditions', route: '/terms',   Icon: IconFile, iconBg: colors.iconBgPurple, badge: null },
     ],
   },
 ];
 
-// ─── MAIN COMPONENT ─────────────────────────────────────────────────
+// ─── MAIN COMPONENT ──────────────────────────────────────────────────
 export default function ProfileScreen() {
-  const [userData, setUserData]         = useState(null);
-  const [loading, setLoading]           = useState(true);
-  const [logoutModal, setLogoutModal]   = useState(false);
+  const [userData, setUserData]       = useState(null);
+  const [loading, setLoading]         = useState(true);
+  const [logoutModal, setLogoutModal] = useState(false);
+
+  // ── DARK MODE ──
+  const { theme } = useTheme();
+  const { colors, darkMode } = theme;
 
   const router = useRouter();
 
-  // 🔥 FETCH USER DATA
   const fetchUserData = async (user) => {
     try {
       if (!user) return;
@@ -163,7 +168,6 @@ export default function ProfileScreen() {
     return unsub;
   }, []);
 
-  // 🔒 LOGOUT
   const handleLogout = async () => {
     await signOut(auth);
     setLogoutModal(false);
@@ -173,26 +177,34 @@ export default function ProfileScreen() {
   const getInitials = (name = '') =>
     name.trim().split(' ').map((n) => n[0]).slice(0, 2).join('').toUpperCase() || 'U';
 
+  // ── DARK MODE: loader bg ──
   if (loading) {
     return (
-      <View style={s.loaderWrap}>
+      <View style={[s.loaderWrap, { backgroundColor: colors.background }]}>
         <ActivityIndicator size="large" color="#3aa0b8" />
       </View>
     );
   }
 
-  return (
-    <SafeAreaView style={s.safe}>
-      <StatusBar barStyle="light-content" backgroundColor="#3aa0b8" />
+  // Build menu with dynamic icon backgrounds
+  const MENU_SECTIONS = getMenuSections(colors);
 
+  return (
+    // ── DARK MODE: safe area bg ──
+    <SafeAreaView style={[s.safe, { backgroundColor: colors.hero }]}>
+
+      {/* ── DARK MODE: status bar ── */}
+      <StatusBar barStyle="light-content" backgroundColor={colors.hero} />
+
+      {/* ── DARK MODE: scroll bg ── */}
       <ScrollView
-        style={s.scroll}
+        style={{ backgroundColor: colors.background }}
         contentContainerStyle={s.scrollContent}
         showsVerticalScrollIndicator={false}
       >
 
-        {/* ── HERO ──────────────────────────────────── */}
-        <View style={s.hero}>
+        {/* ── HERO ── DARK MODE: hero bg ── */}
+        <View style={[s.hero, { backgroundColor: colors.hero }]}>
           <View style={s.heroCircle1} />
           <View style={s.heroCircle2} />
 
@@ -221,17 +233,22 @@ export default function ProfileScreen() {
 
             <Text style={s.userName}>{userData?.name || 'User'}</Text>
             <Text style={s.userEmail}>{userData?.email || ''}</Text>
-
           </View>
         </View>
 
-        {/* ── BODY ──────────────────────────────────── */}
-        <View style={s.body}>
+        {/* ── BODY ── DARK MODE: body bg ── */}
+        <View style={[s.body, { backgroundColor: colors.background }]}>
 
           {MENU_SECTIONS.map((section) => (
             <View key={section.label}>
-              <Text style={s.sectionLabel}>{section.label}</Text>
-              <View style={s.menuCard}>
+
+              {/* ── DARK MODE: section label color ── */}
+              <Text style={[s.sectionLabel, { color: colors.sectionLabel }]}>
+                {section.label}
+              </Text>
+
+              {/* ── DARK MODE: card bg ── */}
+              <View style={[s.menuCard, { backgroundColor: colors.card }]}>
                 {section.items.map((item, idx) => {
                   const ItemIcon = item.Icon;
                   return (
@@ -244,11 +261,15 @@ export default function ProfileScreen() {
                       onPress={() => router.push(item.route)}
                       activeOpacity={0.7}
                     >
+                      {/* ── DARK MODE: icon bg from colors ── */}
                       <View style={[s.menuIcon, { backgroundColor: item.iconBg }]}>
                         <ItemIcon size={18} />
                       </View>
 
-                      <Text style={s.menuLabel}>{item.title}</Text>
+                      {/* ── DARK MODE: menu label text ── */}
+                      <Text style={[s.menuLabel, { color: colors.text }]}>
+                        {item.title}
+                      </Text>
 
                       {item.badge && (
                         <View style={s.notifBadge}>
@@ -261,12 +282,14 @@ export default function ProfileScreen() {
                   );
                 })}
               </View>
+
             </View>
           ))}
 
           {/* ── LOGOUT ── */}
-          <Text style={s.sectionLabel}>Session</Text>
-          <View style={s.menuCard}>
+          {/* ── DARK MODE: section label + card ── */}
+          <Text style={[s.sectionLabel, { color: colors.sectionLabel }]}>Session</Text>
+          <View style={[s.menuCard, { backgroundColor: colors.card }]}>
             <TouchableOpacity
               style={s.menuItem}
               onPress={() => setLogoutModal(true)}
@@ -283,7 +306,7 @@ export default function ProfileScreen() {
         </View>
       </ScrollView>
 
-      {/* ── LOGOUT MODAL ─────────────────────────────── */}
+      {/* ── LOGOUT MODAL ── DARK MODE: box bg + title ── */}
       <Modal
         transparent
         visible={logoutModal}
@@ -291,20 +314,20 @@ export default function ProfileScreen() {
         onRequestClose={() => setLogoutModal(false)}
       >
         <View style={s.modalOverlay}>
-          <View style={s.modalBox}>
+          <View style={[s.modalBox, { backgroundColor: colors.card }]}>
 
             <View style={s.modalIconWrap}>
               <IconLogOut size={26} color="#dc4a4a" />
             </View>
 
-            <Text style={s.modalTitle}>Log out?</Text>
+            <Text style={[s.modalTitle, { color: colors.text }]}>Log out?</Text>
             <Text style={s.modalSub}>
               You'll be signed out and returned to the login screen.
             </Text>
 
             <View style={s.modalActions}>
               <TouchableOpacity
-                style={s.btnCancel}
+                style={[s.btnCancel, { backgroundColor: colors.background }]}
                 onPress={() => setLogoutModal(false)}
                 activeOpacity={0.75}
               >
@@ -323,24 +346,23 @@ export default function ProfileScreen() {
           </View>
         </View>
       </Modal>
+
     </SafeAreaView>
   );
 }
 
-// ─── STYLES ─────────────────────────────────────────────────────────
+// ─── STYLES ──────────────────────────────────────────────────────────
+// Static only — all dynamic colors applied inline above
 const PRIMARY = '#3aa0b8';
-const BG      = '#f0f4f5';
 
 const s = StyleSheet.create({
 
-  safe:          { flex: 1, backgroundColor: PRIMARY },
-  scroll:        { flex: 1, backgroundColor: BG },
+  safe:          { flex: 1 },
   scrollContent: { paddingBottom: 48 },
-  loaderWrap:    { flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: BG },
+  loaderWrap:    { flex: 1, justifyContent: 'center', alignItems: 'center' },
 
   // Hero
   hero: {
-    backgroundColor: PRIMARY,
     paddingTop: 14,
     paddingHorizontal: 20,
     paddingBottom: 52,
@@ -395,21 +417,8 @@ const s = StyleSheet.create({
   userName:  { fontSize: 20, fontWeight: '700', color: '#fff', marginBottom: 4, letterSpacing: 0.2 },
   userEmail: { fontSize: 13, color: 'rgba(255,255,255,0.7)', marginBottom: 18 },
 
-  // Stats
-  statsRow: { flexDirection: 'row', gap: 10 },
-  statPill: {
-    flex: 1,
-    backgroundColor: 'rgba(255,255,255,0.15)',
-    borderRadius: 14,
-    paddingVertical: 10,
-    alignItems: 'center',
-  },
-  statVal: { fontSize: 16, fontWeight: '700', color: '#fff' },
-  statLbl: { fontSize: 10, color: 'rgba(255,255,255,0.62)', textTransform: 'uppercase', letterSpacing: 0.6, marginTop: 2 },
-
   // Body
   body: {
-    backgroundColor: BG,
     marginTop: -22,
     borderTopLeftRadius: 24,
     borderTopRightRadius: 24,
@@ -419,7 +428,6 @@ const s = StyleSheet.create({
   sectionLabel: {
     fontSize: 11,
     fontWeight: '600',
-    color: '#8aa5ac',
     textTransform: 'uppercase',
     letterSpacing: 1,
     marginLeft: 4,
@@ -429,11 +437,10 @@ const s = StyleSheet.create({
 
   // Menu
   menuCard: {
-    backgroundColor: '#fff',
     borderRadius: 18,
     overflow: 'hidden',
     marginBottom: 16,
-    shadowColor: '#3aa0b8',
+    shadowColor: PRIMARY,
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.07,
     shadowRadius: 8,
@@ -459,7 +466,6 @@ const s = StyleSheet.create({
     flex: 1,
     fontSize: 14.5,
     fontWeight: '500',
-    color: '#1a3a42',
     letterSpacing: 0.1,
   },
   notifBadge: {
@@ -473,12 +479,11 @@ const s = StyleSheet.create({
   // Modal
   modalOverlay: {
     flex: 1,
-    backgroundColor: 'rgba(10,30,35,0.45)',
+    backgroundColor: 'rgba(10,30,35,0.55)',
     justifyContent: 'center',
     alignItems: 'center',
   },
   modalBox: {
-    backgroundColor: '#fff',
     borderRadius: 24,
     paddingHorizontal: 24,
     paddingVertical: 28,
@@ -497,27 +502,15 @@ const s = StyleSheet.create({
     justifyContent: 'center', alignItems: 'center',
     marginBottom: 16,
   },
-  modalTitle: { fontSize: 18, fontWeight: '700', color: '#1a3a42', marginBottom: 8 },
-  modalSub: {
-    fontSize: 13.5,
-    color: '#7fa0a8',
-    textAlign: 'center',
-    lineHeight: 20,
-    marginBottom: 24,
-  },
-  modalActions: { flexDirection: 'row', gap: 10, width: '100%' },
-  btnCancel: {
-    flex: 1, paddingVertical: 14,
-    backgroundColor: '#f0f4f5',
-    borderRadius: 14,
-    alignItems: 'center',
-  },
+  modalTitle:    { fontSize: 18, fontWeight: '700', marginBottom: 8 },
+  modalSub:      { fontSize: 13.5, color: '#7fa0a8', textAlign: 'center', lineHeight: 20, marginBottom: 24 },
+  modalActions:  { flexDirection: 'row', gap: 10, width: '100%' },
+  btnCancel:     { flex: 1, paddingVertical: 14, borderRadius: 14, alignItems: 'center' },
   btnCancelText: { fontSize: 14, fontWeight: '600', color: '#4a7a85' },
   btnLogout: {
     flex: 1, paddingVertical: 14,
     backgroundColor: '#dc4a4a',
-    borderRadius: 14,
-    alignItems: 'center',
+    borderRadius: 14, alignItems: 'center',
     shadowColor: '#dc4a4a',
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.28,
