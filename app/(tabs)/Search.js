@@ -74,14 +74,12 @@ export default function SearchScreen() {
       <View style={styles.header}>
         <View style={styles.leftHeader}>
           <Image
-  source={{
-    uri: userData?.image || 'https://via.placeholder.com/100'
-  }}
-  style={styles.profilePic}
-/>
+            source={{ uri: 'https://i.pravatar.cc/100' }}
+            style={styles.profilePic}
+          />
           <View>
             <Text style={styles.hello}>Hello</Text>
-            <Text style={styles.name}>{userData?.name}</Text>
+            
           </View>
         </View>
 
