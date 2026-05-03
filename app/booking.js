@@ -16,8 +16,10 @@ export default function BookingScreen() {
   const auth = getAuth();
 
   const [hotel, setHotel] = useState(null);
-  const [nights, setNights] = useState(2);
-  const [selectedDate, setSelectedDate] = useState(null);
+  const [nights, setNights] = useState(0);
+  const [checkIn, setCheckIn] = useState(null);
+  const [checkOut, setCheckOut] = useState(null);
+  const [selecting, setSelecting] = useState('checkin'); // 'checkin' | 'checkout'
   const [selectedTime, setSelectedTime] = useState('09:00 WIB');
   const [guests, setGuests] = useState('');
   const [loading, setLoading] = useState(false);
@@ -50,16 +52,30 @@ export default function BookingScreen() {
     return date.toISOString().split('T')[0]; // "YYYY-MM-DD"
   };
 
-  const getCheckOut = (checkIn, n) => {
-    if (!checkIn) return null;
-    const d = new Date(checkIn);
-    d.setDate(d.getDate() + n);
-    return d.toISOString().split('T')[0];
+  // ── Two-tap date selection ────────────────────────────────────
+  const handleDayPress = (dateStr) => {
+    if (selecting === 'checkin') {
+      setCheckIn(dateStr);
+      setCheckOut(null);        // reset checkout when checkin changes
+      setNights(0);
+      setSelecting('checkout');
+    } else {
+      if (dateStr <= checkIn) {
+        Alert.alert('Invalid Date', 'Check-out must be after check-in.');
+        return;
+      }
+      setCheckOut(dateStr);
+      setSelecting('checkin'); // reset for next time
+
+      // Auto-calculate nights from date difference
+      const diff = (new Date(dateStr) - new Date(checkIn)) / (1000 * 60 * 60 * 24);
+      setNights(diff);
+    }
   };
 
   // ── Submit booking ────────────────────────────────────────────
   const handleFinishBooking = async () => {
-    if (!selectedDate) return Alert.alert('Select a date', 'Please pick a check-in date.');
+    if (!checkIn || !checkOut) return Alert.alert('Select Dates', 'Please pick check-in and check-out dates.');
     if (!guests) return Alert.alert('Guests', 'Please enter number of guests.');
 
     const user = auth.currentUser;
@@ -76,8 +92,8 @@ export default function BookingScreen() {
         pricePerNight: hotel.price,
         nights,
         totalPrice:    hotel.price * nights,
-        checkInDate:   selectedDate,
-        checkOutDate:  getCheckOut(selectedDate, nights),
+        checkInDate:   checkIn,
+        checkOutDate:  checkOut,
         selectedTime,
         guests:        parseInt(guests),
         status:        'confirmed',
@@ -102,52 +118,83 @@ export default function BookingScreen() {
   for (let i = 0; i < firstDay; i++) cells.push(null);
   for (let d = 1; d <= daysInMonth; d++) cells.push(d);
 
-  const DAYS = ['SUN','MON','TUE','WED','THU','FRI','SAT'];
+  const DAYS = ['SUN', 'MON', 'TUE', 'WED', 'THU', 'FRI', 'SAT'];
 
   return (
     <View style={styles.container}>
       <ScrollView contentContainerStyle={styles.scroll}>
 
-        {/* Price + Nights */}
+        {/* Price + Nights (now auto-calculated, counter removed) */}
         <View style={styles.priceRow}>
           <Text style={styles.price}>${hotel.price.toLocaleString()}/Night</Text>
-          <View style={styles.counter}>
-            <TouchableOpacity onPress={() => setNights(n => Math.max(1, n - 1))} style={styles.counterBtn}>
-              <Text style={styles.counterSymbol}>−</Text>
-            </TouchableOpacity>
-            <Text style={styles.counterVal}>{nights}</Text>
-            <TouchableOpacity onPress={() => setNights(n => n + 1)} style={styles.counterBtn}>
-              <Text style={styles.counterSymbol}>+</Text>
-            </TouchableOpacity>
+          <Text style={styles.nightsBadge}>
+            {nights > 0 ? `${nights} Night${nights > 1 ? 's' : ''}` : '— Nights'}
+          </Text>
+        </View>
+
+        {/* Check-in / Check-out summary */}
+        <View style={styles.dateRow}>
+          <View style={[styles.dateBadge, checkIn && styles.dateBadgeActive]}>
+            <Text style={styles.dateBadgeLabel}>Check-in</Text>
+            <Text style={[styles.dateBadgeValue, checkIn && styles.dateBadgeValueActive]}>
+              {checkIn || 'Select'}
+            </Text>
+          </View>
+          <Text style={styles.dateArrow}>→</Text>
+          <View style={[styles.dateBadge, checkOut && styles.dateBadgeActive]}>
+            <Text style={styles.dateBadgeLabel}>Check-out</Text>
+            <Text style={[styles.dateBadgeValue, checkOut && styles.dateBadgeValueActive]}>
+              {checkOut || 'Select'}
+            </Text>
           </View>
         </View>
 
         {/* Calendar */}
         <View style={styles.calendar}>
+
+          {/* Hint label */}
+          <Text style={styles.selectingHint}>
+            {selecting === 'checkin'
+              ? '👆 Tap to select Check-in date'
+              : '👆 Now tap Check-out date'}
+          </Text>
+
           <View style={styles.calHeader}>
             <TouchableOpacity onPress={prevMonth}><Text style={styles.arrow}>‹</Text></TouchableOpacity>
             <Text style={styles.monthName}>{monthName}</Text>
             <TouchableOpacity onPress={nextMonth}><Text style={styles.arrow}>›</Text></TouchableOpacity>
           </View>
+
           <View style={styles.dayLabels}>
             {DAYS.map(d => <Text key={d} style={styles.dayLabel}>{d}</Text>)}
           </View>
+
           <View style={styles.daysGrid}>
             {cells.map((day, i) => {
               const dateStr = day ? formatDate(day) : null;
-              const isSelected = dateStr === selectedDate;
+              const isCheckIn  = dateStr === checkIn;
+              const isCheckOut = dateStr === checkOut;
+              const isInRange  = checkIn && checkOut && dateStr > checkIn && dateStr < checkOut;
               const today = new Date();
-              const isPast = day && new Date(year, month, day) < new Date(today.getFullYear(), today.getMonth(), today.getDate());
+              const isPast = day && new Date(year, month, day) < new Date(
+                today.getFullYear(), today.getMonth(), today.getDate()
+              );
+
               return (
                 <TouchableOpacity
                   key={i}
-                  style={[styles.dayCell, isSelected && styles.dayCellSelected]}
+                  style={[
+                    styles.dayCell,
+                    (isCheckIn || isCheckOut) && styles.dayCellSelected,
+                    isInRange && styles.dayCellRange,
+                  ]}
                   disabled={!day || isPast}
-                  onPress={() => setSelectedDate(dateStr)}
+                  onPress={() => handleDayPress(dateStr)}
                 >
                   <Text style={[
                     styles.dayText,
-                    isSelected && styles.dayTextSelected,
+                    (isCheckIn || isCheckOut) && styles.dayTextSelected,
+                    isInRange && styles.dayTextRange,
                     isPast && styles.dayTextPast,
                   ]}>
                     {day || ''}
@@ -204,16 +251,36 @@ const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: '#fff' },
   scroll: { padding: 20, paddingBottom: 100 },
 
+  // Price row — no more manual counter
   priceRow: {
     flexDirection: 'row', justifyContent: 'space-between',
     alignItems: 'center', backgroundColor: '#F7F7F7',
-    borderRadius: 14, padding: 16, marginBottom: 20,
+    borderRadius: 14, padding: 16, marginBottom: 12,
   },
   price: { fontSize: 18, fontWeight: '700', color: '#3AADBE' },
-  counter: { flexDirection: 'row', alignItems: 'center', gap: 12 },
-  counterBtn: { width: 30, height: 30, alignItems: 'center', justifyContent: 'center' },
-  counterSymbol: { fontSize: 20, color: '#333', fontWeight: '600' },
-  counterVal: { fontSize: 18, fontWeight: '700', color: '#111', minWidth: 24, textAlign: 'center' },
+  nightsBadge: { fontSize: 15, fontWeight: '600', color: '#555' },
+
+  // Check-in / Check-out summary row
+  dateRow: {
+    flexDirection: 'row', alignItems: 'center',
+    justifyContent: 'space-between', marginBottom: 16,
+  },
+  dateBadge: {
+    flex: 1, backgroundColor: '#F7F7F7', borderRadius: 12,
+    padding: 12, alignItems: 'center',
+    borderWidth: 1.5, borderColor: 'transparent',
+  },
+  dateBadgeActive: { borderColor: '#3AADBE' },
+  dateBadgeLabel: { fontSize: 11, color: '#999', marginBottom: 4 },
+  dateBadgeValue: { fontSize: 13, fontWeight: '600', color: '#aaa' },
+  dateBadgeValueActive: { color: '#111' },
+  dateArrow: { fontSize: 18, color: '#3AADBE', marginHorizontal: 10 },
+
+  // Hint
+  selectingHint: {
+    textAlign: 'center', color: '#3AADBE',
+    fontSize: 13, marginBottom: 10, fontWeight: '500',
+  },
 
   calendar: { backgroundColor: '#F7F7F7', borderRadius: 16, padding: 16, marginBottom: 24 },
   calHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 },
@@ -222,10 +289,14 @@ const styles = StyleSheet.create({
   dayLabels: { flexDirection: 'row', justifyContent: 'space-around', marginBottom: 8 },
   dayLabel: { width: 36, textAlign: 'center', fontSize: 11, color: '#999', fontWeight: '600' },
   daysGrid: { flexDirection: 'row', flexWrap: 'wrap' },
+
   dayCell: { width: '14.28%', alignItems: 'center', paddingVertical: 6, borderRadius: 18 },
   dayCellSelected: { backgroundColor: '#3AADBE' },
+  dayCellRange: { backgroundColor: '#D0F0F4' },
+
   dayText: { fontSize: 13, color: '#222' },
   dayTextSelected: { color: '#fff', fontWeight: '700' },
+  dayTextRange: { color: '#3AADBE' },
   dayTextPast: { color: '#ccc' },
 
   sectionHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 },

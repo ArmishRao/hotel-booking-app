@@ -52,9 +52,9 @@ export default function ProfileScreen({ navigation }) {
 
     const handleLogout = async () => {
     await signOut(auth);
-    setLogoutModal(false);
+  setLogoutModal(false);
     router.replace("/auth/login");  // ← fixed
-    };
+};
 
   if (loading) {
     return (
@@ -89,20 +89,25 @@ export default function ProfileScreen({ navigation }) {
       </View>
 
       {/* MENU */}
-      <View style={styles.menuCard}>
-        {menuItems.map((item, index) => (
-          <TouchableOpacity
-            key={index}
-            style={styles.menuItem}
-            onPress={() => navigation.navigate(item.screen)}
-          >
-            <Text style={styles.menuIcon}>{item.icon}</Text>
-            <Text style={styles.menuText}>{item.title}</Text>
-            <Text style={styles.arrow}>›</Text>
-          </TouchableOpacity>
-        ))}
-      </View>
-
+<View style={styles.menuCard}>
+  {menuItems.map((item, index) => (
+    <TouchableOpacity
+      key={index}
+      style={styles.menuItem}
+      onPress={() => {
+        if (item.screen === 'History') {
+          router.push('/history');
+        } else {
+          navigation.navigate(item.screen);
+        }
+      }}
+    >
+      <Text style={styles.menuIcon}>{item.icon}</Text>
+      <Text style={styles.menuText}>{item.title}</Text>
+      <Text style={styles.arrow}>›</Text>
+    </TouchableOpacity>
+  ))}
+</View>
       {/* LOGOUT BUTTON */}
       <TouchableOpacity
         style={styles.logoutBtn}
@@ -110,6 +115,7 @@ export default function ProfileScreen({ navigation }) {
       >
         <Text style={styles.logoutText}>Log Out</Text>
       </TouchableOpacity>
+      
 
       {/* LOGOUT CONFIRM MODAL */}
       <Modal transparent visible={logoutModal} animationType="fade">
