@@ -1,3 +1,6 @@
+import React from 'react';
+import { Tabs, useSegments } from 'expo-router';
+import { Ionicons } from '@expo/vector-icons';
 export default function TabLayout() {
   const segments = useSegments();
   const isOnHotelDetail = segments.includes('hotel-detail');

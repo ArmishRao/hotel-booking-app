@@ -79,6 +79,8 @@ export default function SearchScreen() {
           />
           <View>
             <Text style={styles.hello}>Hello</Text>
+            <Text style={styles.name}>{userData?.name || userData?.username || 'User'}</Text>
+            
             
           </View>
         </View>

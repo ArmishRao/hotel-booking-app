@@ -1,6 +1,7 @@
-import React, { useEffect, useState } from 'react';
 import { db } from '../../firebase/firebaseConfig';
 import { collection, getDocs } from 'firebase/firestore';
+import { AuthContext } from '../../context/AuthContext';
+import React, { useEffect, useState, useContext } from 'react';
 import {
   View,
   Text,
@@ -12,6 +13,8 @@ import {
 import { useRouter } from 'expo-router';
 import styles from '../../styles/HomeStyles';
 export default function Home() {
+    const { userData } = useContext(AuthContext);  
+
     const router = useRouter(); 
 
   const [hotels, setHotels] = useState([]);
@@ -87,7 +90,7 @@ export default function Home() {
     />
     <View>
       <Text style={styles.hello}>Hello</Text>
-      <Text style={styles.name}>Arcadia</Text>
+<Text style={styles.name}>{userData?.name || userData?.username || 'User'}</Text>
     </View>
   </View>
 
